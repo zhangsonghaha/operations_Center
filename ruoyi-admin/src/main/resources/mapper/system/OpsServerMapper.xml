@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.web.mapper.OpsServerMapper">
+    
+    <resultMap type="OpsServer" id="OpsServerResult">
+        <result property="serverId"    column="server_id"    />
+        <result property="serverName"    column="server_name"    />
+        <result property="publicIp"    column="public_ip"    />
+        <result property="privateIp"    column="private_ip"    />
+        <result property="serverPort"    column="server_port"    />
+        <result property="username"    column="username"    />
+        <result property="password"    column="password"    />
+        <result property="authType"    column="auth_type"    />
+        <result property="privateKey"    column="private_key"    />
+        <result property="dataCenter"    column="data_center"    />
+        <result property="groupId"    column="group_id"    />
+        <result property="status"    column="status"    />
+        <result property="remark"    column="remark"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <sql id="selectOpsServerVo">
+        select server_id, server_name, public_ip, private_ip, server_port, username, password, auth_type, private_key, data_center, group_id, status, remark, create_by, create_time, update_by, update_time from t_ops_server
+    </sql>
+
+    <select id="selectOpsServerList" parameterType="OpsServer" resultMap="OpsServerResult">
+        <include refid="selectOpsServerVo"/>
+        <where>  
+            <if test="serverName != null  and serverName != ''"> and server_name like concat('%', #{serverName}, '%')</if>
+            <if test="publicIp != null  and publicIp != ''"> and public_ip like concat('%', #{publicIp}, '%')</if>
+            <if test="privateIp != null  and privateIp != ''"> and private_ip like concat('%', #{privateIp}, '%')</if>
+            <if test="dataCenter != null  and dataCenter != ''"> and data_center = #{dataCenter}</if>
+            <if test="status != null  and status != ''"> and status = #{status}</if>
+        </where>
+    </select>
+    
+    <select id="selectOpsServerByServerId" parameterType="Long" resultMap="OpsServerResult">
+        <include refid="selectOpsServerVo"/>
+        where server_id = #{serverId}
+    </select>
+        
+    <insert id="insertOpsServer" parameterType="OpsServer" useGeneratedKeys="true" keyProperty="serverId">
+        insert into t_ops_server
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="serverName != null">server_name,</if>
+            <if test="publicIp != null">public_ip,</if>
+            <if test="privateIp != null">private_ip,</if>
+            <if test="serverPort != null">server_port,</if>
+            <if test="username != null">username,</if>
+            <if test="password != null">password,</if>
+            <if test="authType != null">auth_type,</if>
+            <if test="privateKey != null">private_key,</if>
+            <if test="dataCenter != null">data_center,</if>
+            <if test="groupId != null">group_id,</if>
+            <if test="status != null">status,</if>
+            <if test="remark != null">remark,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="serverName != null">#{serverName},</if>
+            <if test="publicIp != null">#{publicIp},</if>
+            <if test="privateIp != null">#{privateIp},</if>
+            <if test="serverPort != null">#{serverPort},</if>
+            <if test="username != null">#{username},</if>
+            <if test="password != null">#{password},</if>
+            <if test="authType != null">#{authType},</if>
+            <if test="privateKey != null">#{privateKey},</if>
+            <if test="dataCenter != null">#{dataCenter},</if>
+            <if test="groupId != null">#{groupId},</if>
+            <if test="status != null">#{status},</if>
+            <if test="remark != null">#{remark},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateOpsServer" parameterType="OpsServer">
+        update t_ops_server
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="serverName != null">server_name = #{serverName},</if>
+            <if test="publicIp != null">public_ip = #{publicIp},</if>
+            <if test="privateIp != null">private_ip = #{privateIp},</if>
+            <if test="serverPort != null">server_port = #{serverPort},</if>
+            <if test="username != null">username = #{username},</if>
+            <if test="password != null">password = #{password},</if>
+            <if test="authType != null">auth_type = #{authType},</if>
+            <if test="privateKey != null">private_key = #{privateKey},</if>
+            <if test="dataCenter != null">data_center = #{dataCenter},</if>
+            <if test="groupId != null">group_id = #{groupId},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where server_id = #{serverId}
+    </update>
+
+    <delete id="deleteOpsServerByServerId" parameterType="Long">
+        delete from t_ops_server where server_id = #{serverId}
+    </delete>
+
+    <delete id="deleteOpsServerByServerIds" parameterType="String">
+        delete from t_ops_server where server_id in 
+        <foreach item="serverId" collection="array" open="(" separator="," close=")">
+            #{serverId}
+        </foreach>
+    </delete>
+</mapper>
