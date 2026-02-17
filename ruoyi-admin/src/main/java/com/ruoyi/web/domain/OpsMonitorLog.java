@@ -1,31 +1,39 @@
 package com.ruoyi.web.domain;
 
-import java.util.Date;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.ruoyi.common.core.domain.BaseEntity;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
+import java.math.BigDecimal;
+import java.util.Date;
 
 /**
- * 监控日志对象 t_ops_monitor_log
+ * 服务器监控日志对象 sys_ops_monitor_log
  */
 public class OpsMonitorLog extends BaseEntity
 {
     private static final long serialVersionUID = 1L;
 
-    /** 日志ID */
+    /** ID */
     private Long logId;
 
-    /** CPU负载 */
-    private Double cpuLoad;
+    /** 服务器ID */
+    private Long serverId;
 
-    /** 内存负载 */
-    private Double memoryLoad;
+    /** CPU使用率(%) */
+    private BigDecimal cpuUsage;
 
-    /** 记录时间 */
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private Date recordTime;
+    /** 内存使用率(%) */
+    private BigDecimal memoryUsage;
 
+    /** 磁盘使用率(%) */
+    private BigDecimal diskUsage;
+
+    /** 网络发送速率(KB/s) */
+    private BigDecimal netTxRate;
+
+    /** 网络接收速率(KB/s) */
+    private BigDecimal netRxRate;
+    
     public void setLogId(Long logId) 
     {
         this.logId = logId;
@@ -35,42 +43,71 @@ public class OpsMonitorLog extends BaseEntity
     {
         return logId;
     }
-    public void setCpuLoad(Double cpuLoad) 
+    public void setServerId(Long serverId) 
     {
-        this.cpuLoad = cpuLoad;
+        this.serverId = serverId;
     }
 
-    public Double getCpuLoad() 
+    public Long getServerId() 
     {
-        return cpuLoad;
+        return serverId;
     }
-    public void setMemoryLoad(Double memoryLoad) 
+    public void setCpuUsage(BigDecimal cpuUsage) 
     {
-        this.memoryLoad = memoryLoad;
-    }
-
-    public Double getMemoryLoad() 
-    {
-        return memoryLoad;
-    }
-    public void setRecordTime(Date recordTime) 
-    {
-        this.recordTime = recordTime;
+        this.cpuUsage = cpuUsage;
     }
 
-    public Date getRecordTime() 
+    public BigDecimal getCpuUsage() 
     {
-        return recordTime;
+        return cpuUsage;
+    }
+    public void setMemoryUsage(BigDecimal memoryUsage) 
+    {
+        this.memoryUsage = memoryUsage;
+    }
+
+    public BigDecimal getMemoryUsage() 
+    {
+        return memoryUsage;
+    }
+    public void setDiskUsage(BigDecimal diskUsage) 
+    {
+        this.diskUsage = diskUsage;
+    }
+
+    public BigDecimal getDiskUsage() 
+    {
+        return diskUsage;
+    }
+    public void setNetTxRate(BigDecimal netTxRate) 
+    {
+        this.netTxRate = netTxRate;
+    }
+
+    public BigDecimal getNetTxRate() 
+    {
+        return netTxRate;
+    }
+    public void setNetRxRate(BigDecimal netRxRate) 
+    {
+        this.netRxRate = netRxRate;
+    }
+
+    public BigDecimal getNetRxRate() 
+    {
+        return netRxRate;
     }
 
     @Override
     public String toString() {
         return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
             .append("logId", getLogId())
-            .append("cpuLoad", getCpuLoad())
-            .append("memoryLoad", getMemoryLoad())
-            .append("recordTime", getRecordTime())
-            .append("createBy", getCreateBy())
+            .append("serverId", getServerId())
+            .append("cpuUsage", getCpuUsage())
+            .append("memoryUsage", getMemoryUsage())
+            .append("diskUsage", getDiskUsage())
+            .append("netTxRate", getNetTxRate())
+            .append("netRxRate", getNetRxRate())
             .append("createTime", getCreateTime())
             .toString();
     }

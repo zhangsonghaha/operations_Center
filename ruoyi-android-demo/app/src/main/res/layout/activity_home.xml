@@ -1,0 +1,407 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawer_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background"
+    tools:openDrawer="start">
+
+    <!-- Main Content -->
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <com.google.android.material.appbar.AppBarLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/surface"
+            app:elevation="0dp">
+
+            <androidx.appcompat.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                android:theme="@style/ThemeOverlay.AppCompat.Light"
+                app:popupTheme="@style/ThemeOverlay.AppCompat.Light">
+                
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="XingShu O&amp;M"
+                    android:textColor="@color/text_primary"
+                    android:textSize="20sp"
+                    android:textStyle="bold"/>
+                    
+            </androidx.appcompat.widget.Toolbar>
+
+        </com.google.android.material.appbar.AppBarLayout>
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="16dp">
+
+                <!-- Row 1: Stats Cards -->
+                <LinearLayout
+                    android:id="@+id/row_stats"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <!-- Online Hosts -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_card_gradient_green"
+                        android:orientation="vertical"
+                        android:padding="12dp"
+                        android:layout_marginEnd="8dp">
+                        
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Online Hosts"
+                            android:textColor="#CCFFFFFF"
+                            android:textSize="10sp"/>
+                        
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginTop="8dp">
+                            <ImageView
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:src="@android:drawable/ic_menu_upload"
+                                app:tint="@color/accent_green"/>
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="124"
+                                android:textColor="@color/white"
+                                android:textSize="18sp"
+                                android:textStyle="bold"
+                                android:layout_marginStart="4dp"/>
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Alerts -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_card_gradient_red"
+                        android:orientation="vertical"
+                        android:padding="12dp"
+                        android:layout_marginEnd="8dp">
+                        
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Alerts"
+                            android:textColor="#CCFFFFFF"
+                            android:textSize="10sp"/>
+                        
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginTop="8dp">
+                            <ImageView
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:src="@android:drawable/stat_notify_error"
+                                app:tint="@color/accent_red"/>
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="3"
+                                android:textColor="@color/white"
+                                android:textSize="18sp"
+                                android:textStyle="bold"
+                                android:layout_marginStart="4dp"/>
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Work Orders -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_card_gradient_orange"
+                        android:orientation="vertical"
+                        android:padding="12dp">
+                        
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Work Orders"
+                            android:textColor="#CCFFFFFF"
+                            android:textSize="10sp"/>
+                        
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginTop="8dp">
+                            <ImageView
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:src="@android:drawable/ic_menu_agenda"
+                                app:tint="@color/accent_orange"/>
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="5"
+                                android:textColor="@color/white"
+                                android:textSize="18sp"
+                                android:textStyle="bold"
+                                android:layout_marginStart="4dp"/>
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Row 2: Charts -->
+                <LinearLayout
+                    android:id="@+id/row_charts"
+                    android:layout_width="match_parent"
+                    android:layout_height="220dp"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="16dp"
+                    app:layout_constraintTop_toBottomOf="@id/row_stats">
+
+                    <!-- Global CPU Usage -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_card_light"
+                        android:orientation="vertical"
+                        android:padding="16dp"
+                        android:layout_marginEnd="8dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Global CPU Usage"
+                            android:textColor="@color/text_primary"
+                            android:textSize="12sp"
+                            android:textStyle="bold"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="72%"
+                            android:textColor="@color/text_primary"
+                            android:textSize="32sp"
+                            android:textStyle="bold"
+                            android:layout_marginTop="8dp"/>
+                        
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Usage"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="12sp"/>
+
+                        <!-- Simulated Chart -->
+                        <ImageView
+                            android:layout_width="match_parent"
+                            android:layout_height="0dp"
+                            android:layout_weight="1"
+                            android:layout_marginTop="16dp"
+                            android:src="@drawable/ic_wave_chart"
+                            android:scaleType="fitXY"/>
+                    </LinearLayout>
+
+                    <!-- Alert Distribution -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_card_light"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Alert Distribution"
+                            android:textColor="@color/text_primary"
+                            android:textSize="12sp"
+                            android:textStyle="bold"/>
+
+                        <FrameLayout
+                            android:layout_width="100dp"
+                            android:layout_height="100dp"
+                            android:layout_gravity="center"
+                            android:layout_marginTop="16dp">
+
+                            <View
+                                android:id="@+id/view_donut"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:background="@drawable/bg_donut_placeholder" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Alerts"
+                                android:layout_gravity="center"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="10sp"/>
+                        </FrameLayout>
+
+                        <!-- Legend -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:layout_marginTop="12dp">
+                            
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:gravity="center_vertical"
+                                android:layout_marginBottom="4dp">
+                                <View android:layout_width="8dp" android:layout_height="8dp" android:background="@color/accent_red"/>
+                                <TextView android:text="Critical" android:textColor="@color/text_secondary" android:textSize="10sp" android:layout_marginStart="8dp" android:layout_width="0dp" android:layout_weight="1"/>
+                                <TextView android:text="45%" android:textColor="@color/text_primary" android:textSize="10sp"/>
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:gravity="center_vertical"
+                                android:layout_marginBottom="4dp">
+                                <View android:layout_width="8dp" android:layout_height="8dp" android:background="@color/accent_orange"/>
+                                <TextView android:text="Warning" android:textColor="@color/text_secondary" android:textSize="10sp" android:layout_marginStart="8dp" android:layout_width="0dp" android:layout_weight="1"/>
+                                <TextView android:text="30%" android:textColor="@color/text_primary" android:textSize="10sp"/>
+                            </LinearLayout>
+                            
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:gravity="center_vertical">
+                                <View android:layout_width="8dp" android:layout_height="8dp" android:background="@color/accent_blue"/>
+                                <TextView android:text="Info" android:textColor="@color/text_secondary" android:textSize="10sp" android:layout_marginStart="8dp" android:layout_width="0dp" android:layout_weight="1"/>
+                                <TextView android:text="25%" android:textColor="@color/text_primary" android:textSize="10sp"/>
+                            </LinearLayout>
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Row 3: Buttons -->
+                <LinearLayout
+                    android:id="@+id/row_buttons"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="24dp"
+                    app:layout_constraintTop_toBottomOf="@id/row_charts">
+
+                    <!-- SSH Button -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:background="@drawable/bg_card_gradient_blue"
+                        android:padding="16dp"
+                        android:layout_marginEnd="8dp">
+                        
+                        <ImageView
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:src="@android:drawable/ic_media_play"
+                            app:tint="@color/white"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="SSH"
+                            android:textColor="@color/white"
+                            android:textStyle="bold"
+                            android:layout_marginTop="8dp"/>
+                    </LinearLayout>
+
+                    <!-- K8s Button -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:background="@drawable/bg_card_gradient_orange"
+                        android:padding="16dp"
+                        android:layout_marginEnd="8dp">
+                        
+                        <ImageView
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:src="@android:drawable/ic_input_add"
+                            app:tint="@color/white"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="K8s"
+                            android:textColor="@color/white"
+                            android:textStyle="bold"
+                            android:layout_marginTop="8dp"/>
+                    </LinearLayout>
+
+                    <!-- Logs Button -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:background="@drawable/bg_card_gradient_blue"
+                        android:padding="16dp">
+                        
+                        <ImageView
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:src="@android:drawable/ic_menu_sort_by_size"
+                            app:tint="@color/white"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Logs"
+                            android:textColor="@color/white"
+                            android:textStyle="bold"
+                            android:layout_marginTop="8dp"/>
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </ScrollView>
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+    <!-- Navigation Drawer -->
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/nav_view"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:fitsSystemWindows="true"
+        app:headerLayout="@layout/nav_header_main"
+        app:menu="@menu/activity_main_drawer"
+        app:itemIconTint="@color/primary"
+        app:itemTextColor="@color/text_primary"/>
+
+</androidx.drawerlayout.widget.DrawerLayout>

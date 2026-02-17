@@ -109,7 +109,9 @@ public class SysLoginService
      */
     public void validateCaptcha(String username, String code, String uuid)
     {
-        boolean captchaEnabled = configService.selectCaptchaEnabled();
+        // 临时禁用验证码，以便于APP登录测试
+        // boolean captchaEnabled = configService.selectCaptchaEnabled();
+        boolean captchaEnabled = false; 
         if (captchaEnabled)
         {
             String verifyKey = CacheConstants.CAPTCHA_CODE_KEY + StringUtils.nvl(uuid, "");

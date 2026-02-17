@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">星枢运维</string>
+    <string name="title_activity_login">若依移动端</string>
+    <string name="hint_server_address">服务器地址</string>
+    <string name="hint_username">账号</string>
+    <string name="hint_password">密码</string>
+    <string name="action_login">登 录</string>
+    <string name="action_scan">点击扫码</string>
+    <string name="title_scan_login">扫码登录 PC 端</string>
+    <string name="desc_scan_login">扫描电脑端二维码进行快捷登录</string>
+    <string name="label_user_info">用户信息</string>
+    <string name="loading_user_info">正在获取用户信息...</string>
+    <string name="welcome">欢迎</string>
+    
+    <!-- Accessibility -->
+    <string name="desc_logo">应用图标</string>
+    <string name="desc_scan_icon">扫码图标</string>
+    
+    <string name="navigation_drawer_open">打开导航</string>
+    <string name="navigation_drawer_close">关闭导航</string>
+</resources>

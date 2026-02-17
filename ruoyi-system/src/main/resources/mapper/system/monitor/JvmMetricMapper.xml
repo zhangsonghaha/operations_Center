@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.monitor.JvmMetricMapper">
+    
+    <resultMap type="JvmMetric" id="JvmMetricResult">
+        <id     property="metricId"     column="metric_id"     />
+        <result property="targetId"     column="target_id"     />
+        <result property="heapUsed"     column="heap_used"     />
+        <result property="heapMax"      column="heap_max"      />
+        <result property="nonHeapUsed"  column="non_heap_used" />
+        <result property="nonHeapMax"   column="non_heap_max"  />
+        <result property="threadActive" column="thread_active" />
+        <result property="threadPeak"   column="thread_peak"   />
+        <result property="gcCount"      column="gc_count"      />
+        <result property="gcTime"       column="gc_time"       />
+        <result property="createTime"   column="create_time"   />
+    </resultMap>
+
+    <sql id="selectJvmMetricVo">
+        select metric_id, target_id, heap_used, heap_max, non_heap_used, non_heap_max, thread_active, thread_peak, gc_count, gc_time, create_time from sys_jvm_metric
+    </sql>
+
+    <select id="selectJvmMetricList" parameterType="JvmMetric" resultMap="JvmMetricResult">
+        <include refid="selectJvmMetricVo"/>
+        <where>  
+            <if test="targetId != null"> and target_id = #{targetId}</if>
+            <if test="params.beginTime != null and params.beginTime != ''"><!-- 开始时间检索 -->
+                and create_time &gt;= str_to_date(#{params.beginTime},'%Y-%m-%d %H:%i:%s')
+            </if>
+            <if test="params.endTime != null and params.endTime != ''"><!-- 结束时间检索 -->
+                and create_time &lt;= str_to_date(#{params.endTime},'%Y-%m-%d %H:%i:%s')
+            </if>
+        </where>
+        order by create_time desc
+    </select>
+    
+    <select id="selectJvmMetricById" parameterType="Long" resultMap="JvmMetricResult">
+        <include refid="selectJvmMetricVo"/>
+        where metric_id = #{metricId}
+    </select>
+        
+    <insert id="insertJvmMetric" parameterType="JvmMetric" useGeneratedKeys="true" keyProperty="metricId">
+        insert into sys_jvm_metric
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="targetId != null">target_id,</if>
+            <if test="heapUsed != null">heap_used,</if>
+            <if test="heapMax != null">heap_max,</if>
+            <if test="nonHeapUsed != null">non_heap_used,</if>
+            <if test="nonHeapMax != null">non_heap_max,</if>
+            <if test="threadActive != null">thread_active,</if>
+            <if test="threadPeak != null">thread_peak,</if>
+            <if test="gcCount != null">gc_count,</if>
+            <if test="gcTime != null">gc_time,</if>
+            <if test="createTime != null">create_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="targetId != null">#{targetId},</if>
+            <if test="heapUsed != null">#{heapUsed},</if>
+            <if test="heapMax != null">#{heapMax},</if>
+            <if test="nonHeapUsed != null">#{nonHeapUsed},</if>
+            <if test="nonHeapMax != null">#{nonHeapMax},</if>
+            <if test="threadActive != null">#{threadActive},</if>
+            <if test="threadPeak != null">#{threadPeak},</if>
+            <if test="gcCount != null">#{gcCount},</if>
+            <if test="gcTime != null">#{gcTime},</if>
+            <if test="createTime != null">#{createTime},</if>
+         </trim>
+    </insert>
+
+    <insert id="batchInsertJvmMetric" parameterType="java.util.List" useGeneratedKeys="true" keyProperty="metricId">
+        insert into sys_jvm_metric (target_id, heap_used, heap_max, non_heap_used, non_heap_max, thread_active, thread_peak, gc_count, gc_time, create_time)
+        values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.targetId}, #{item.heapUsed}, #{item.heapMax}, #{item.nonHeapUsed}, #{item.nonHeapMax}, #{item.threadActive}, #{item.threadPeak}, #{item.gcCount}, #{item.gcTime}, #{item.createTime})
+        </foreach>
+    </insert>
+
+    <delete id="deleteExpiredMetrics">
+        delete from sys_jvm_metric where create_time &lt; DATE_SUB(NOW(), INTERVAL #{days} DAY)
+    </delete>
+    
+</mapper>

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.web.mapper.SysCommandTemplateMapper">
+    
+    <resultMap type="SysCommandTemplate" id="SysCommandTemplateResult">
+        <result property="templateId"    column="template_id"    />
+        <result property="templateName"    column="template_name"    />
+        <result property="commandContent"    column="command_content"    />
+        <result property="timeout"    column="timeout"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+
+    <sql id="selectSysCommandTemplateVo">
+        select template_id, template_name, command_content, timeout, create_by, create_time, update_by, update_time, remark from sys_command_template
+    </sql>
+
+    <select id="selectSysCommandTemplateList" parameterType="SysCommandTemplate" resultMap="SysCommandTemplateResult">
+        <include refid="selectSysCommandTemplateVo"/>
+        <where>  
+            <if test="templateName != null  and templateName != ''"> and template_name like concat('%', #{templateName}, '%')</if>
+        </where>
+    </select>
+    
+    <select id="selectSysCommandTemplateById" parameterType="Long" resultMap="SysCommandTemplateResult">
+        <include refid="selectSysCommandTemplateVo"/>
+        where template_id = #{templateId}
+    </select>
+        
+    <insert id="insertSysCommandTemplate" parameterType="SysCommandTemplate" useGeneratedKeys="true" keyProperty="templateId">
+        insert into sys_command_template
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="templateName != null and templateName != ''">template_name,</if>
+            <if test="commandContent != null and commandContent != ''">command_content,</if>
+            <if test="timeout != null">timeout,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="templateName != null and templateName != ''">#{templateName},</if>
+            <if test="commandContent != null and commandContent != ''">#{commandContent},</if>
+            <if test="timeout != null">#{timeout},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+         </trim>
+    </insert>
+
+    <update id="updateSysCommandTemplate" parameterType="SysCommandTemplate">
+        update sys_command_template
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="templateName != null and templateName != ''">template_name = #{templateName},</if>
+            <if test="commandContent != null and commandContent != ''">command_content = #{commandContent},</if>
+            <if test="timeout != null">timeout = #{timeout},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where template_id = #{templateId}
+    </update>
+
+    <delete id="deleteSysCommandTemplateById" parameterType="Long">
+        delete from sys_command_template where template_id = #{templateId}
+    </delete>
+
+    <delete id="deleteSysCommandTemplateByIds" parameterType="String">
+        delete from sys_command_template where template_id in 
+        <foreach item="templateId" collection="array" open="(" separator="," close=")">
+            #{templateId}
+        </foreach>
+    </delete>
+</mapper>

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.web.mapper.OpsMonitorLogMapper">
+    
+    <resultMap type="OpsMonitorLog" id="OpsMonitorLogResult">
+        <result property="logId"    column="id"    />
+        <result property="serverId"    column="server_id"    />
+        <result property="cpuUsage"    column="cpu_usage"    />
+        <result property="memoryUsage"    column="memory_usage"    />
+        <result property="diskUsage"    column="disk_usage"    />
+        <result property="netTxRate"    column="net_tx_rate"    />
+        <result property="netRxRate"    column="net_rx_rate"    />
+        <result property="createTime"    column="create_time"    />
+    </resultMap>
+
+    <sql id="selectOpsMonitorLogVo">
+        select id, server_id, cpu_usage, memory_usage, disk_usage, net_tx_rate, net_rx_rate, create_time from sys_ops_monitor_log
+    </sql>
+
+    <select id="selectOpsMonitorLogList" parameterType="OpsMonitorLog" resultMap="OpsMonitorLogResult">
+        <include refid="selectOpsMonitorLogVo"/>
+        <where>  
+            <if test="serverId != null "> and server_id = #{serverId}</if>
+            <if test="params.beginTime != null and params.beginTime != ''"><!-- 开始时间检索 -->
+                and create_time &gt;= #{params.beginTime}
+            </if>
+            <if test="params.endTime != null and params.endTime != ''"><!-- 结束时间检索 -->
+                and create_time &lt;= #{params.endTime}
+            </if>
+        </where>
+        order by create_time asc
+    </select>
+    
+    <select id="selectOpsMonitorLogById" parameterType="Long" resultMap="OpsMonitorLogResult">
+        <include refid="selectOpsMonitorLogVo"/>
+        where id = #{logId}
+    </select>
+        
+    <insert id="insertOpsMonitorLog" parameterType="OpsMonitorLog" useGeneratedKeys="true" keyProperty="logId">
+        insert into sys_ops_monitor_log
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="serverId != null">server_id,</if>
+            <if test="cpuUsage != null">cpu_usage,</if>
+            <if test="memoryUsage != null">memory_usage,</if>
+            <if test="diskUsage != null">disk_usage,</if>
+            <if test="netTxRate != null">net_tx_rate,</if>
+            <if test="netRxRate != null">net_rx_rate,</if>
+            <if test="createTime != null">create_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="serverId != null">#{serverId},</if>
+            <if test="cpuUsage != null">#{cpuUsage},</if>
+            <if test="memoryUsage != null">#{memoryUsage},</if>
+            <if test="diskUsage != null">#{diskUsage},</if>
+            <if test="netTxRate != null">#{netTxRate},</if>
+            <if test="netRxRate != null">#{netRxRate},</if>
+            <if test="createTime != null">#{createTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateOpsMonitorLog" parameterType="OpsMonitorLog">
+        update sys_ops_monitor_log
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="serverId != null">server_id = #{serverId},</if>
+            <if test="cpuUsage != null">cpu_usage = #{cpuUsage},</if>
+            <if test="memoryUsage != null">memory_usage = #{memoryUsage},</if>
+            <if test="diskUsage != null">disk_usage = #{diskUsage},</if>
+            <if test="netTxRate != null">net_tx_rate = #{netTxRate},</if>
+            <if test="netRxRate != null">net_rx_rate = #{netRxRate},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+        </trim>
+        where id = #{logId}
+    </update>
+
+    <delete id="deleteOpsMonitorLogById" parameterType="Long">
+        delete from sys_ops_monitor_log where id = #{logId}
+    </delete>
+
+    <delete id="deleteOpsMonitorLogByIds" parameterType="String">
+        delete from sys_ops_monitor_log where id in 
+        <foreach item="logId" collection="array" open="(" separator="," close=")">
+            #{logId}
+        </foreach>
+    </delete>
+    
+    <delete id="cleanExpiredLogs">
+        delete from sys_ops_monitor_log where create_time &lt; date_sub(now(), interval #{days} day)
+    </delete>
+</mapper>

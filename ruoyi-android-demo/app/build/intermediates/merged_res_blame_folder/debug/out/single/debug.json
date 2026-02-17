@@ -1,0 +1,126 @@
+[
+    {
+        "merged": "com.ruoyi.mobile.app-merged_res-30:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "com.ruoyi.mobile.app-main-32:/mipmap-anydpi-v26/ic_launcher.xml"
+    },
+    {
+        "merged": "com.ruoyi.mobile.app-merged_res-30:/mipmap-mdpi_ic_launcher_round.webp.flat",
+        "source": "com.ruoyi.mobile.app-main-32:/mipmap-mdpi/ic_launcher_round.webp"
+    },
+    {
+        "merged": "com.ruoyi.mobile.app-merged_res-30:/mipmap-xxhdpi_ic_launcher_foreground.webp.flat",
+        "source": "com.ruoyi.mobile.app-main-32:/mipmap-xxhdpi/ic_launcher_foreground.webp"
+    },
+    {
+        "merged": "com.ruoyi.mobile.app-merged_res-30:/mipmap-xxxhdpi_ic_launcher_round.webp.flat",
+        "source": "com.ruoyi.mobile.app-main-32:/mipmap-xxxhdpi/ic_launcher_round.webp"
+    },
+    {
+        "merged": "com.ruoyi.mobile.app-merged_res-30:/layout_activity_login.xml.flat",
+        "source": "com.ruoyi.mobile.app-main-32:/layout/activity_login.xml"
+    },
+    {
+        "merged": "com.ruoyi.mobile.app-merged_res-30:/drawable_fav.png.flat",
+        "source": "com.ruoyi.mobile.app-main-32:/drawable/fav.png"
+    },
+    {
+        "merged": "com.ruoyi.mobile.app-merged_res-30:/drawable_bg_card_gradient_blue.xml.flat",
+        "source": "com.ruoyi.mobile.app-main-32:/drawable/bg_card_gradient_blue.xml"
+    },
+    {
+        "merged": "com.ruoyi.mobile.app-merged_res-30:/layout_nav_header_main.xml.flat",
+        "source": "com.ruoyi.mobile.app-main-32:/layout/nav_header_main.xml"
+    },
+    {
+        "merged": "com.ruoyi.mobile.app-merged_res-30:/mipmap-hdpi_ic_launcher_round.webp.flat",
+        "source": "com.ruoyi.mobile.app-main-32:/mipmap-hdpi/ic_launcher_round.webp"
+    },
+    {
+        "merged": "com.ruoyi.mobile.app-merged_res-30:/drawable_ic_wave_chart.xml.flat",
+        "source": "com.ruoyi.mobile.app-main-32:/drawable/ic_wave_chart.xml"
+    },
+    {
+        "merged": "com.ruoyi.mobile.app-merged_res-30:/drawable_bg_donut_placeholder.xml.flat",
+        "source": "com.ruoyi.mobile.app-main-32:/drawable/bg_donut_placeholder.xml"
+    },
+    {
+        "merged": "com.ruoyi.mobile.app-merged_res-30:/mipmap-xhdpi_ic_launcher_round.webp.flat",
+        "source": "com.ruoyi.mobile.app-main-32:/mipmap-xhdpi/ic_launcher_round.webp"
+    },
+    {
+        "merged": "com.ruoyi.mobile.app-merged_res-30:/mipmap-hdpi_ic_launcher.webp.flat",
+        "source": "com.ruoyi.mobile.app-main-32:/mipmap-hdpi/ic_launcher.webp"
+    },
+    {
+        "merged": "com.ruoyi.mobile.app-merged_res-30:/drawable_ic_launcher_background.xml.flat",
+        "source": "com.ruoyi.mobile.app-main-32:/drawable/ic_launcher_background.xml"
+    },
+    {
+        "merged": "com.ruoyi.mobile.app-merged_res-30:/mipmap-xxhdpi_ic_launcher_round.webp.flat",
+        "source": "com.ruoyi.mobile.app-main-32:/mipmap-xxhdpi/ic_launcher_round.webp"
+    },
+    {
+        "merged": "com.ruoyi.mobile.app-merged_res-30:/menu_activity_main_drawer.xml.flat",
+        "source": "com.ruoyi.mobile.app-main-32:/menu/activity_main_drawer.xml"
+    },
+    {
+        "merged": "com.ruoyi.mobile.app-merged_res-30:/drawable_bg_card_gradient_red.xml.flat",
+        "source": "com.ruoyi.mobile.app-main-32:/drawable/bg_card_gradient_red.xml"
+    },
+    {
+        "merged": "com.ruoyi.mobile.app-merged_res-30:/layout_activity_monitor.xml.flat",
+        "source": "com.ruoyi.mobile.app-main-32:/layout/activity_monitor.xml"
+    },
+    {
+        "merged": "com.ruoyi.mobile.app-merged_res-30:/mipmap-anydpi-v26_ic_launcher_round.xml.flat",
+        "source": "com.ruoyi.mobile.app-main-32:/mipmap-anydpi-v26/ic_launcher_round.xml"
+    },
+    {
+        "merged": "com.ruoyi.mobile.app-merged_res-30:/mipmap-xxhdpi_ic_launcher.webp.flat",
+        "source": "com.ruoyi.mobile.app-main-32:/mipmap-xxhdpi/ic_launcher.webp"
+    },
+    {
+        "merged": "com.ruoyi.mobile.app-merged_res-30:/mipmap-hdpi_ic_launcher_foreground.webp.flat",
+        "source": "com.ruoyi.mobile.app-main-32:/mipmap-hdpi/ic_launcher_foreground.webp"
+    },
+    {
+        "merged": "com.ruoyi.mobile.app-merged_res-30:/mipmap-xhdpi_ic_launcher.webp.flat",
+        "source": "com.ruoyi.mobile.app-main-32:/mipmap-xhdpi/ic_launcher.webp"
+    },
+    {
+        "merged": "com.ruoyi.mobile.app-merged_res-30:/mipmap-xxxhdpi_ic_launcher_foreground.webp.flat",
+        "source": "com.ruoyi.mobile.app-main-32:/mipmap-xxxhdpi/ic_launcher_foreground.webp"
+    },
+    {
+        "merged": "com.ruoyi.mobile.app-merged_res-30:/mipmap-mdpi_ic_launcher.webp.flat",
+        "source": "com.ruoyi.mobile.app-main-32:/mipmap-mdpi/ic_launcher.webp"
+    },
+    {
+        "merged": "com.ruoyi.mobile.app-merged_res-30:/drawable_bg_card_light.xml.flat",
+        "source": "com.ruoyi.mobile.app-main-32:/drawable/bg_card_light.xml"
+    },
+    {
+        "merged": "com.ruoyi.mobile.app-merged_res-30:/mipmap-xhdpi_ic_launcher_foreground.webp.flat",
+        "source": "com.ruoyi.mobile.app-main-32:/mipmap-xhdpi/ic_launcher_foreground.webp"
+    },
+    {
+        "merged": "com.ruoyi.mobile.app-merged_res-30:/drawable_bg_card_gradient_green.xml.flat",
+        "source": "com.ruoyi.mobile.app-main-32:/drawable/bg_card_gradient_green.xml"
+    },
+    {
+        "merged": "com.ruoyi.mobile.app-merged_res-30:/drawable_bg_card_gradient_orange.xml.flat",
+        "source": "com.ruoyi.mobile.app-main-32:/drawable/bg_card_gradient_orange.xml"
+    },
+    {
+        "merged": "com.ruoyi.mobile.app-merged_res-30:/layout_activity_home.xml.flat",
+        "source": "com.ruoyi.mobile.app-main-32:/layout/activity_home.xml"
+    },
+    {
+        "merged": "com.ruoyi.mobile.app-merged_res-30:/mipmap-mdpi_ic_launcher_foreground.webp.flat",
+        "source": "com.ruoyi.mobile.app-main-32:/mipmap-mdpi/ic_launcher_foreground.webp"
+    },
+    {
+        "merged": "com.ruoyi.mobile.app-merged_res-30:/mipmap-xxxhdpi_ic_launcher.webp.flat",
+        "source": "com.ruoyi.mobile.app-main-32:/mipmap-xxxhdpi/ic_launcher.webp"
+    }
+]

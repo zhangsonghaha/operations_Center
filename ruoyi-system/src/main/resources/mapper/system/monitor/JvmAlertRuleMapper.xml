@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.monitor.JvmAlertRuleMapper">
+    
+    <resultMap type="JvmAlertRule" id="JvmAlertRuleResult">
+        <id     property="ruleId"       column="rule_id"       />
+        <result property="targetId"     column="target_id"     />
+        <result property="metricName"   column="metric_name"   />
+        <result property="condition"    column="condition"     />
+        <result property="threshold"    column="threshold"     />
+        <result property="enabled"      column="enabled"       />
+        <result property="createBy"     column="create_by"     />
+        <result property="createTime"   column="create_time"   />
+        <result property="updateBy"     column="update_by"     />
+        <result property="updateTime"   column="update_time"   />
+        <result property="remark"       column="remark"        />
+    </resultMap>
+
+    <sql id="selectJvmAlertRuleVo">
+        select rule_id, target_id, metric_name, `condition`, threshold, enabled, create_by, create_time, update_by, update_time, remark from sys_jvm_alert_rule
+    </sql>
+
+    <select id="selectJvmAlertRuleList" parameterType="JvmAlertRule" resultMap="JvmAlertRuleResult">
+        <include refid="selectJvmAlertRuleVo"/>
+        <where>  
+            <if test="targetId != null"> and target_id = #{targetId}</if>
+            <if test="metricName != null  and metricName != ''"> and metric_name = #{metricName}</if>
+            <if test="enabled != null  and enabled != ''"> and enabled = #{enabled}</if>
+        </where>
+    </select>
+    
+    <select id="selectJvmAlertRuleById" parameterType="Long" resultMap="JvmAlertRuleResult">
+        <include refid="selectJvmAlertRuleVo"/>
+        where rule_id = #{ruleId}
+    </select>
+        
+    <insert id="insertJvmAlertRule" parameterType="JvmAlertRule" useGeneratedKeys="true" keyProperty="ruleId">
+        insert into sys_jvm_alert_rule
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="targetId != null">target_id,</if>
+            <if test="metricName != null and metricName != ''">metric_name,</if>
+            <if test="condition != null and condition != ''">`condition`,</if>
+            <if test="threshold != null">threshold,</if>
+            <if test="enabled != null">enabled,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="targetId != null">#{targetId},</if>
+            <if test="metricName != null and metricName != ''">#{metricName},</if>
+            <if test="condition != null and condition != ''">#{condition},</if>
+            <if test="threshold != null">#{threshold},</if>
+            <if test="enabled != null">#{enabled},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+         </trim>
+    </insert>
+
+    <update id="updateJvmAlertRule" parameterType="JvmAlertRule">
+        update sys_jvm_alert_rule
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="targetId != null">target_id = #{targetId},</if>
+            <if test="metricName != null and metricName != ''">metric_name = #{metricName},</if>
+            <if test="condition != null and condition != ''">`condition` = #{condition},</if>
+            <if test="threshold != null">threshold = #{threshold},</if>
+            <if test="enabled != null">enabled = #{enabled},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where rule_id = #{ruleId}
+    </update>
+
+    <delete id="deleteJvmAlertRuleById" parameterType="Long">
+        delete from sys_jvm_alert_rule where rule_id = #{ruleId}
+    </delete>
+
+    <delete id="deleteJvmAlertRuleByIds" parameterType="String">
+        delete from sys_jvm_alert_rule where rule_id in 
+        <foreach item="ruleId" collection="array" open="(" separator="," close=")">
+            #{ruleId}
+        </foreach>
+    </delete>
+    
+</mapper>

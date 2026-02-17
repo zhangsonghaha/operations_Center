@@ -222,6 +222,17 @@ public class TokenService
         {
             token = token.replace(Constants.TOKEN_PREFIX, "");
         }
+        // 支持从URL参数中获取token（主要用于文件下载等无法设置Header的场景）
+        else if (StringUtils.isEmpty(token))
+        {
+            token = request.getParameter(header);
+            // 如果URL参数中也不带前缀，这里不需要处理，通常URL参数直接传Token值
+            // 但如果前端传了 Bearer xxx，也需要处理
+            if (StringUtils.isNotEmpty(token) && token.startsWith(Constants.TOKEN_PREFIX))
+            {
+                token = token.replace(Constants.TOKEN_PREFIX, "");
+            }
+        }
         return token;
     }
 

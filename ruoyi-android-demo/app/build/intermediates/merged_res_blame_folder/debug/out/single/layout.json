@@ -1,0 +1,18 @@
+[
+    {
+        "merged": "com.ruoyi.mobile.app-mergeDebugResources-29:/layout/nav_header_main.xml",
+        "source": "com.ruoyi.mobile.app-main-32:/layout/nav_header_main.xml"
+    },
+    {
+        "merged": "com.ruoyi.mobile.app-mergeDebugResources-29:/layout/activity_login.xml",
+        "source": "com.ruoyi.mobile.app-main-32:/layout/activity_login.xml"
+    },
+    {
+        "merged": "com.ruoyi.mobile.app-mergeDebugResources-29:/layout/activity_home.xml",
+        "source": "com.ruoyi.mobile.app-main-32:/layout/activity_home.xml"
+    },
+    {
+        "merged": "com.ruoyi.mobile.app-mergeDebugResources-29:/layout/activity_monitor.xml",
+        "source": "com.ruoyi.mobile.app-main-32:/layout/activity_monitor.xml"
+    }
+]

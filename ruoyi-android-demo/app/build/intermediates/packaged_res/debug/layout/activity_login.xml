@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="24dp"
+    android:background="@color/background">
+
+    <LinearLayout
+        android:id="@+id/header_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/card_login"
+        app:layout_constraintVertical_chainStyle="packed"
+        android:layout_marginBottom="32dp">
+
+        <ImageView
+            android:id="@+id/logo"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:src="@android:drawable/sym_def_app_icon"
+            app:tint="@color/primary"
+            android:contentDescription="@string/desc_logo" />
+
+        <TextView
+            android:id="@+id/title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/title_activity_login"
+            android:textSize="24sp"
+            android:textColor="@color/text_primary"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp"/>
+    </LinearLayout>
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/card_login"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="0dp"
+        app:strokeWidth="1dp"
+        app:strokeColor="#E4E7ED"
+        app:cardBackgroundColor="@color/surface"
+        app:layout_constraintTop_toBottomOf="@id/header_container"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/til_server"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/hint_server_address"
+                app:boxBackgroundColor="@color/surface"
+                app:boxStrokeColor="@color/primary"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_server"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textUri"
+                    android:textSize="14sp"
+                    android:textColor="@color/text_primary" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/til_username"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/hint_username"
+                android:layout_marginTop="16dp"
+                app:boxBackgroundColor="@color/surface"
+                app:boxStrokeColor="@color/primary"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_username"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="admin"
+                    android:textColor="@color/text_primary"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/til_password"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/hint_password"
+                android:layout_marginTop="16dp"
+                app:boxBackgroundColor="@color/surface"
+                app:boxStrokeColor="@color/primary"
+                app:endIconMode="password_toggle"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_password"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPassword"
+                    android:text="admin123"
+                    android:textColor="@color/text_primary"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <Button
+                android:id="@+id/btn_login"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:text="@string/action_login"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginTop="24dp"
+                android:backgroundTint="@color/primary"
+                android:textColor="@color/white"
+                app:cornerRadius="8dp"/>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.monitor.JvmTargetMapper">
+    
+    <resultMap type="JvmTarget" id="JvmTargetResult">
+        <id     property="targetId"     column="target_id"     />
+        <result property="name"         column="name"          />
+        <result property="host"         column="host"          />
+        <result property="port"         column="port"          />
+        <result property="username"     column="username"      />
+        <result property="password"     column="password"      />
+        <result property="enabled"      column="enabled"       />
+        <result property="createBy"     column="create_by"     />
+        <result property="createTime"   column="create_time"   />
+        <result property="updateBy"     column="update_by"     />
+        <result property="updateTime"   column="update_time"   />
+        <result property="remark"       column="remark"        />
+    </resultMap>
+
+    <sql id="selectJvmTargetVo">
+        select target_id, name, host, port, username, password, enabled, create_by, create_time, update_by, update_time, remark from sys_jvm_target
+    </sql>
+
+    <select id="selectJvmTargetList" parameterType="JvmTarget" resultMap="JvmTargetResult">
+        <include refid="selectJvmTargetVo"/>
+        <where>  
+            <if test="name != null  and name != ''"> and name like concat('%', #{name}, '%')</if>
+            <if test="enabled != null  and enabled != ''"> and enabled = #{enabled}</if>
+        </where>
+    </select>
+    
+    <select id="selectJvmTargetById" parameterType="Long" resultMap="JvmTargetResult">
+        <include refid="selectJvmTargetVo"/>
+        where target_id = #{targetId}
+    </select>
+        
+    <insert id="insertJvmTarget" parameterType="JvmTarget" useGeneratedKeys="true" keyProperty="targetId">
+        insert into sys_jvm_target
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="name != null and name != ''">name,</if>
+            <if test="host != null and host != ''">host,</if>
+            <if test="port != null">port,</if>
+            <if test="username != null">username,</if>
+            <if test="password != null">password,</if>
+            <if test="enabled != null">enabled,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="name != null and name != ''">#{name},</if>
+            <if test="host != null and host != ''">#{host},</if>
+            <if test="port != null">#{port},</if>
+            <if test="username != null">#{username},</if>
+            <if test="password != null">#{password},</if>
+            <if test="enabled != null">#{enabled},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+         </trim>
+    </insert>
+
+    <update id="updateJvmTarget" parameterType="JvmTarget">
+        update sys_jvm_target
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="name != null and name != ''">name = #{name},</if>
+            <if test="host != null and host != ''">host = #{host},</if>
+            <if test="port != null">port = #{port},</if>
+            <if test="username != null">username = #{username},</if>
+            <if test="password != null">password = #{password},</if>
+            <if test="enabled != null">enabled = #{enabled},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where target_id = #{targetId}
+    </update>
+
+    <delete id="deleteJvmTargetById" parameterType="Long">
+        delete from sys_jvm_target where target_id = #{targetId}
+    </delete>
+
+    <delete id="deleteJvmTargetByIds" parameterType="String">
+        delete from sys_jvm_target where target_id in 
+        <foreach item="targetId" collection="array" open="(" separator="," close=")">
+            #{targetId}
+        </foreach>
+    </delete>
+    
+</mapper>

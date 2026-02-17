@@ -43,11 +43,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <resultMap type="OpsMonitorLog" id="OpsMonitorLogResult">
-        <result property="logId"    column="log_id"    />
-        <result property="cpuLoad"    column="cpu_load"    />
-        <result property="memoryLoad"    column="memory_load"    />
-        <result property="recordTime"    column="record_time"    />
-        <result property="createBy"    column="create_by"    />
+        <result property="logId"    column="id"    />
+        <result property="serverId"    column="server_id"    />
+        <result property="cpuUsage"    column="cpu_usage"    />
+        <result property="memoryUsage"    column="memory_usage"    />
+        <result property="diskUsage"    column="disk_usage"    />
+        <result property="netTxRate"    column="net_tx_rate"    />
+        <result property="netRxRate"    column="net_rx_rate"    />
         <result property="createTime"    column="create_time"    />
     </resultMap>
 
@@ -78,8 +80,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </select>
     
     <select id="selectOpsMonitorLogList" parameterType="OpsMonitorLog" resultMap="OpsMonitorLogResult">
-        select log_id, cpu_load, memory_load, record_time, create_by, create_time from t_ops_monitor_log
-        order by record_time asc
+        select id, server_id, cpu_usage, memory_usage, disk_usage, net_tx_rate, net_rx_rate, create_time from sys_ops_monitor_log
+        order by create_time asc
     </select>
 
     <select id="countOnlineHosts" resultType="int">

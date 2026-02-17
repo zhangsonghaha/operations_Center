@@ -1,0 +1,38 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.ruoyi.mobile.app-mergeDebugResources-28:/values-v16/values-v16.xml",
+            "map": [
+                {
+                    "source": "E:\\gradle\\gradleRepository\\caches\\transforms-3\\c41df7fa52b87a84ad125421caa51c52\\transformed\\core-1.10.1\\res\\values-v16\\values-v16.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endColumns": "65",
+                        "endOffsets": "116"
+                    }
+                },
+                {
+                    "source": "E:\\gradle\\gradleRepository\\caches\\transforms-3\\1caacfbf38389f40cf1b2b4119bf4e72\\transformed\\appcompat-1.6.1\\res\\values-v16\\values-v16.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endLines": "5",
+                        "endColumns": "12",
+                        "endOffsets": "223"
+                    },
+                    "to": {
+                        "startLines": "3",
+                        "startColumns": "4",
+                        "startOffsets": "121",
+                        "endLines": "6",
+                        "endColumns": "12",
+                        "endOffsets": "289"
+                    }
+                }
+            ]
+        }
+    ]
+}
