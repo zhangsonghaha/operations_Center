@@ -52,12 +52,19 @@ export default defineConfig(({ mode, command }) => {
           changeOrigin: true,
           rewrite: (p) => p.replace(/^\/dev-api/, '')
         },
+
          // springdoc proxy
          '^/v3/api-docs/(.*)': {
           target: baseUrl,
           changeOrigin: true,
         }
-      }
+      },
+      allowedHosts: true,
+      // allowedHosts: [
+      //   'localhost',
+      //   '127.0.0.1',
+      //   '5b788bb.r31.cpolar.top' // 你的cpolar穿透域名
+      // ],
     },
     css: {
       postcss: {

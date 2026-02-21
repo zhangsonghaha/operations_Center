@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.web.mapper.OpsReleaseApplyMapper">
+    
+    <resultMap type="OpsReleaseApply" id="OpsReleaseApplyResult">
+        <result property="id"    column="id"    />
+        <result property="appId"    column="app_id"    />
+        <result property="templateId"    column="template_id"    />
+        <result property="version"    column="version"    />
+        <result property="title"    column="title"    />
+        <result property="description"    column="description"    />
+        <result property="risks"    column="risks"    />
+        <result property="rollbackPlan"    column="rollback_plan"    />
+        <result property="requirementIds"    column="requirement_ids"    />
+        <result property="bugIds"    column="bug_ids"    />
+        <result property="status"    column="status"    />
+        <result property="scheduleTime"    column="schedule_time"    />
+        <result property="applyUserId"    column="apply_user_id"    />
+        <result property="applyUserName"    column="apply_user_name"    />
+        <result property="auditUserId"    column="audit_user_id"    />
+        <result property="auditTime"    column="audit_time"    />
+        <result property="auditReason"    column="audit_reason"    />
+        <result property="scriptContent"    column="script_content"    />
+        <result property="environment"    column="environment"    />
+        <result property="currentStep"    column="current_step"    />
+        <result property="totalSteps"    column="total_steps"    />
+        <result property="approvalStatus"    column="approval_status"    />
+        <result property="processInstanceId"    column="process_instance_id"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+
+    <sql id="selectOpsReleaseApplyVo">
+        select a.id, a.app_id, a.template_id, a.version, a.title, a.description, a.risks, a.rollback_plan, a.requirement_ids, a.bug_ids, a.status, a.schedule_time, a.apply_user_id, u.user_name as apply_user_name, a.audit_user_id, a.audit_time, a.audit_reason, a.script_content, a.environment, a.current_step, a.total_steps, a.approval_status, a.process_instance_id, a.create_by, a.create_time, a.update_by, a.update_time, a.remark
+        from ops_release_apply a
+        left join sys_user u on u.user_id = a.apply_user_id
+    </sql>
+
+    <select id="selectOpsReleaseApplyList" parameterType="OpsReleaseApply" resultMap="OpsReleaseApplyResult">
+        <include refid="selectOpsReleaseApplyVo"/>
+        <where>  
+            <if test="appId != null "> and a.app_id = #{appId}</if>
+            <if test="templateId != null "> and a.template_id = #{templateId}</if>
+            <if test="version != null  and version != ''"> and a.version = #{version}</if>
+            <if test="title != null  and title != ''"> and a.title like concat('%', #{title}, '%')</if>
+            <if test="status != null  and status != ''"> and a.status = #{status}</if>
+        </where>
+    </select>
+    
+    <select id="selectOpsReleaseApplyById" parameterType="Long" resultMap="OpsReleaseApplyResult">
+        <include refid="selectOpsReleaseApplyVo"/>
+        where a.id = #{id}
+    </select>
+
+    <select id="selectOpsReleaseApplyByProcessInstanceIds" parameterType="list" resultMap="OpsReleaseApplyResult">
+        <include refid="selectOpsReleaseApplyVo"/>
+        where a.process_instance_id in
+        <foreach item="pid" collection="list" open="(" separator="," close=")">
+            #{pid}
+        </foreach>
+    </select>
+        
+    <select id="selectReleasePendingList" resultMap="OpsReleaseApplyResult">
+        select DISTINCT a.id, a.app_id, a.template_id, a.version, a.title, a.description, a.risks, a.rollback_plan, a.requirement_ids, a.bug_ids, a.status, a.schedule_time, a.apply_user_id, u.user_name as apply_user_name, a.audit_user_id, a.audit_time, a.audit_reason, a.script_content, a.environment, a.current_step, a.total_steps, a.approval_status, a.process_instance_id, a.create_by, a.create_time, a.update_by, a.update_time, a.remark
+        from ops_release_apply a
+        left join sys_user u on u.user_id = a.apply_user_id
+        inner join act_ru_task t on a.process_instance_id = t.PROC_INST_ID_
+        left join act_ru_identitylink i on t.ID_ = i.TASK_ID_
+        <where>
+            a.status = '1'
+            and a.apply_user_id &lt;&gt; #{userId}
+            AND (
+                t.ASSIGNEE_ = #{userId}
+                OR (
+                    i.TYPE_ = 'candidate'
+                    AND (
+                        i.USER_ID_ = #{userId} 
+                        <if test="roleIds != null and roleIds.size() > 0">
+                        OR i.GROUP_ID_ IN
+                        <foreach item="roleId" collection="roleIds" open="(" separator="," close=")">
+                            #{roleId}
+                        </foreach>
+                        </if>
+                    )
+                )
+            )
+            <if test="apply.title != null  and apply.title != ''"> and a.title like concat('%', #{apply.title}, '%')</if>
+            <if test="apply.appId != null "> and a.app_id = #{apply.appId}</if>
+        </where>
+        order by a.create_time desc
+    </select>
+    
+    <insert id="insertOpsReleaseApply" parameterType="OpsReleaseApply" useGeneratedKeys="true" keyProperty="id">
+        insert into ops_release_apply
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="appId != null">app_id,</if>
+            <if test="templateId != null">template_id,</if>
+            <if test="version != null and version != ''">version,</if>
+            <if test="title != null and title != ''">title,</if>
+            <if test="description != null">description,</if>
+            <if test="risks != null">risks,</if>
+            <if test="rollbackPlan != null">rollback_plan,</if>
+            <if test="requirementIds != null">requirement_ids,</if>
+            <if test="bugIds != null">bug_ids,</if>
+            <if test="status != null">status,</if>
+            <if test="scheduleTime != null">schedule_time,</if>
+            <if test="applyUserId != null">apply_user_id,</if>
+            <if test="auditUserId != null">audit_user_id,</if>
+            <if test="auditTime != null">audit_time,</if>
+            <if test="auditReason != null">audit_reason,</if>
+            <if test="scriptContent != null">script_content,</if>
+            <if test="environment != null">environment,</if>
+            <if test="currentStep != null">current_step,</if>
+            <if test="totalSteps != null">total_steps,</if>
+            <if test="approvalStatus != null">approval_status,</if>
+            <if test="processInstanceId != null">process_instance_id,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="appId != null">#{appId},</if>
+            <if test="templateId != null">#{templateId},</if>
+            <if test="version != null and version != ''">#{version},</if>
+            <if test="title != null and title != ''">#{title},</if>
+            <if test="description != null">#{description},</if>
+            <if test="risks != null">#{risks},</if>
+            <if test="rollbackPlan != null">#{rollbackPlan},</if>
+            <if test="requirementIds != null">#{requirementIds},</if>
+            <if test="bugIds != null">#{bugIds},</if>
+            <if test="status != null">#{status},</if>
+            <if test="scheduleTime != null">#{scheduleTime},</if>
+            <if test="applyUserId != null">#{applyUserId},</if>
+            <if test="auditUserId != null">#{auditUserId},</if>
+            <if test="auditTime != null">#{auditTime},</if>
+            <if test="auditReason != null">#{auditReason},</if>
+            <if test="scriptContent != null">#{scriptContent},</if>
+            <if test="environment != null">#{environment},</if>
+            <if test="currentStep != null">#{currentStep},</if>
+            <if test="totalSteps != null">#{totalSteps},</if>
+            <if test="approvalStatus != null">#{approvalStatus},</if>
+            <if test="processInstanceId != null">#{processInstanceId},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+         </trim>
+    </insert>
+
+    <update id="updateOpsReleaseApply" parameterType="OpsReleaseApply">
+        update ops_release_apply
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="appId != null">app_id = #{appId},</if>
+            <if test="templateId != null">template_id = #{templateId},</if>
+            <if test="version != null and version != ''">version = #{version},</if>
+            <if test="title != null and title != ''">title = #{title},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="risks != null">risks = #{risks},</if>
+            <if test="rollbackPlan != null">rollback_plan = #{rollbackPlan},</if>
+            <if test="requirementIds != null">requirement_ids = #{requirementIds},</if>
+            <if test="bugIds != null">bug_ids = #{bugIds},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="scheduleTime != null">schedule_time = #{scheduleTime},</if>
+            <if test="applyUserId != null">apply_user_id = #{applyUserId},</if>
+            <if test="auditUserId != null">audit_user_id = #{auditUserId},</if>
+            <if test="auditTime != null">audit_time = #{auditTime},</if>
+            <if test="auditReason != null">audit_reason = #{auditReason},</if>
+            <if test="scriptContent != null">script_content = #{scriptContent},</if>
+            <if test="environment != null">environment = #{environment},</if>
+            <if test="currentStep != null">current_step = #{currentStep},</if>
+            <if test="totalSteps != null">total_steps = #{totalSteps},</if>
+            <if test="approvalStatus != null">approval_status = #{approvalStatus},</if>
+            <if test="processInstanceId != null">process_instance_id = #{processInstanceId},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteOpsReleaseApplyById" parameterType="Long">
+        delete from ops_release_apply where id = #{id}
+    </delete>
+
+    <delete id="deleteOpsReleaseApplyByIds" parameterType="String">
+        delete from ops_release_apply where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

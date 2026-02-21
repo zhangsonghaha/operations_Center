@@ -1197,3 +1197,4 @@ VALUES ('信息监控', 2015, 3, 'monitor', 'ops/monitor/index', 1, 0, 'C', '0',
 
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
 VALUES ('监控查询', (SELECT menu_id FROM (SELECT menu_id FROM sys_menu WHERE menu_name = '信息监控' AND parent_id = 2015) AS temp), 1, '#', '', 1, 0, 'F', '0', '0', 'ops:monitor:query', '#', 'admin', sysdate(), '');
+ALTER TABLE ACT_RU_EXECUTION ADD COLUMN IF NOT EXISTS EXTERNAL_WORKER_JOB_COUNT_ INT DEFAULT 0;

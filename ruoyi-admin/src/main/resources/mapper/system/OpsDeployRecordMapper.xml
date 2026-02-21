@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.web.mapper.OpsDeployRecordMapper">
+    
+    <resultMap type="OpsDeployRecord" id="OpsDeployRecordResult">
+        <result property="id"    column="id"    />
+        <result property="appId"    column="app_id"    />
+        <result property="templateVersionId"    column="template_version_id"    />
+        <result property="operLogId"    column="oper_log_id"    />
+        <result property="status"    column="status"    />
+        <result property="errorMsg"    column="error_msg"    />
+        <result property="startTime"    column="start_time"    />
+        <result property="endTime"    column="end_time"    />
+        <result property="duration"    column="duration"    />
+        <result property="jsonResult"    column="json_result"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+    </resultMap>
+
+    <sql id="selectOpsDeployRecordVo">
+        select id, app_id, template_version_id, oper_log_id, status, error_msg, start_time, end_time, duration, json_result, create_by, create_time from ops_deploy_record
+    </sql>
+
+    <select id="selectOpsDeployRecordList" parameterType="OpsDeployRecord" resultMap="OpsDeployRecordResult">
+        <include refid="selectOpsDeployRecordVo"/>
+        <where>  
+            <if test="appId != null "> and app_id = #{appId}</if>
+            <if test="templateVersionId != null "> and template_version_id = #{templateVersionId}</if>
+            <if test="status != null  and status != ''"> and status = #{status}</if>
+            <if test="startTime != null "> and start_time &gt;= #{startTime}</if>
+            <if test="endTime != null "> and end_time &lt;= #{endTime}</if>
+        </where>
+        order by create_time desc
+    </select>
+    
+    <select id="selectOpsDeployRecordById" parameterType="Long" resultMap="OpsDeployRecordResult">
+        <include refid="selectOpsDeployRecordVo"/>
+        where id = #{id}
+    </select>
+        
+    <insert id="insertOpsDeployRecord" parameterType="OpsDeployRecord" useGeneratedKeys="true" keyProperty="id">
+        insert into ops_deploy_record
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="appId != null">app_id,</if>
+            <if test="templateVersionId != null">template_version_id,</if>
+            <if test="operLogId != null">oper_log_id,</if>
+            <if test="status != null">status,</if>
+            <if test="errorMsg != null">error_msg,</if>
+            <if test="startTime != null">start_time,</if>
+            <if test="endTime != null">end_time,</if>
+            <if test="duration != null">duration,</if>
+            <if test="jsonResult != null">json_result,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="appId != null">#{appId},</if>
+            <if test="templateVersionId != null">#{templateVersionId},</if>
+            <if test="operLogId != null">#{operLogId},</if>
+            <if test="status != null">#{status},</if>
+            <if test="errorMsg != null">#{errorMsg},</if>
+            <if test="startTime != null">#{startTime},</if>
+            <if test="endTime != null">#{endTime},</if>
+            <if test="duration != null">#{duration},</if>
+            <if test="jsonResult != null">#{jsonResult},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateOpsDeployRecord" parameterType="OpsDeployRecord">
+        update ops_deploy_record
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="appId != null">app_id = #{appId},</if>
+            <if test="templateVersionId != null">template_version_id = #{templateVersionId},</if>
+            <if test="operLogId != null">oper_log_id = #{operLogId},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="errorMsg != null">error_msg = #{errorMsg},</if>
+            <if test="startTime != null">start_time = #{startTime},</if>
+            <if test="endTime != null">end_time = #{endTime},</if>
+            <if test="duration != null">duration = #{duration},</if>
+            <if test="jsonResult != null">json_result = #{jsonResult},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteOpsDeployRecordById" parameterType="Long">
+        delete from ops_deploy_record where id = #{id}
+    </delete>
+
+    <delete id="deleteOpsDeployRecordByIds" parameterType="Long">
+        delete from ops_deploy_record where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

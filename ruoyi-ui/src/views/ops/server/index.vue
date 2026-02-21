@@ -99,14 +99,16 @@
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="280">
         <template #default="scope">
+          <el-button link type="primary" icon="DataLine" @click="handleMonitor(scope.row)" v-hasPermi="['ops:monitor:list']">监控</el-button>
+          <el-button link type="primary" icon="FolderOpened" @click="handleFiles(scope.row)" v-hasPermi="['ops:file:list']">文件</el-button>
           <el-button link type="primary" icon="Monitor" @click="handleTerminal(scope.row)" v-hasPermi="['ops:server:query']">终端</el-button>
-          <el-button link type="primary" icon="Switch" @click="handleCheck(scope.row)" v-hasPermi="['ops:server:query']">检测</el-button>
           <el-dropdown size="small" @command="(command) => handleCommand(command, scope.row)">
             <el-button link type="primary" icon="DArrowRight">更多</el-button>
             <template #dropdown>
               <el-dropdown-menu>
+                <el-dropdown-item command="handleCheck" icon="Switch">检测连接</el-dropdown-item>
                 <el-dropdown-item command="handleUpdate" icon="Edit" v-hasPermi="['ops:server:edit']">修改</el-dropdown-item>
                 <el-dropdown-item command="handleDelete" icon="Delete" v-hasPermi="['ops:server:remove']">删除</el-dropdown-item>
               </el-dropdown-menu>
@@ -190,7 +192,7 @@
 
 <script setup name="Server">
 import { listServer, getServer, delServer, addServer, updateServer, checkConnection } from "@/api/ops/server";
-import { Search, Refresh, Plus, Edit, Delete, Download, Switch, Upload, Monitor, DArrowRight } from '@element-plus/icons-vue';
+import { Search, Refresh, Plus, Edit, Delete, Download, Switch, Upload, Monitor, DArrowRight, DataLine, FolderOpened } from '@element-plus/icons-vue';
 import { ElMessageBox } from 'element-plus'
 
 const { proxy } = getCurrentInstance();
@@ -350,9 +352,22 @@ function handleTerminal(row) {
   window.open(routeUrl.href, '_blank');
 }
 
+/** 监控跳转 */
+function handleMonitor(row) {
+  router.push({ path: '/ops/monitor', query: { serverId: row.serverId } });
+}
+
+/** 文件跳转 */
+function handleFiles(row) {
+  router.push({ path: '/ops/file', query: { serverId: row.serverId } });
+}
+
 /** 更多操作 */
 function handleCommand(command, row) {
   switch (command) {
+    case "handleCheck":
+      handleCheck(row);
+      break;
     case "handleUpdate":
       handleUpdate(row);
       break;

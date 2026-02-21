@@ -124,7 +124,7 @@ function initSocket() {
   let path = '/ws/ssh';
   
   // 简单判断开发环境
-  if (process.env.NODE_ENV === 'development') {
+  if (import.meta.env.DEV) {
     // 开发环境通常是 localhost:8080 (后端) 或 localhost:80 (Nginx)
     // 如果前端是 localhost:1024，后端是 localhost:8080
     host = 'localhost:8080'; 

@@ -31,8 +31,35 @@ public class OpsApp extends BaseEntity
     /** 监控端口 */
     private String monitorPorts;
 
+    /** 负责人 */
+    private String owner;
+
+    /** 技术栈 */
+    private String techStack;
+
+    /** 所属部门ID */
+    private Long deptId;
+
+    /** 停止脚本 */
+    private String stopScript;
+
+    /** 应用描述 */
+    private String description;
+
+    /** 关联服务器ID集合 */
+    private String serverIds;
+
     /** 状态（0正常 1停用） */
     private String status;
+
+    /** 健康检查地址 */
+    private String healthCheckUrl;
+
+    /** 部署超时时间(秒) */
+    private Integer deployTimeout;
+
+    /** 重试次数 */
+    private Integer retryCount;
 
     public void setAppId(Long appId) 
     {
@@ -79,6 +106,19 @@ public class OpsApp extends BaseEntity
     {
         return startScript;
     }
+    /** 应用包路径 */
+    private String packagePath;
+
+    public void setPackagePath(String packagePath) 
+    {
+        this.packagePath = packagePath;
+    }
+
+    public String getPackagePath() 
+    {
+        return packagePath;
+    }
+    
     public void setMonitorPorts(String monitorPorts) 
     {
         this.monitorPorts = monitorPorts;
@@ -87,6 +127,60 @@ public class OpsApp extends BaseEntity
     public String getMonitorPorts() 
     {
         return monitorPorts;
+    }
+    public void setOwner(String owner) 
+    {
+        this.owner = owner;
+    }
+
+    public String getOwner() 
+    {
+        return owner;
+    }
+    public void setTechStack(String techStack) 
+    {
+        this.techStack = techStack;
+    }
+
+    public String getTechStack() 
+    {
+        return techStack;
+    }
+    public void setDeptId(Long deptId) 
+    {
+        this.deptId = deptId;
+    }
+
+    public Long getDeptId() 
+    {
+        return deptId;
+    }
+    public void setStopScript(String stopScript) 
+    {
+        this.stopScript = stopScript;
+    }
+
+    public String getStopScript() 
+    {
+        return stopScript;
+    }
+    public void setDescription(String description) 
+    {
+        this.description = description;
+    }
+
+    public String getDescription() 
+    {
+        return description;
+    }
+    public void setServerIds(String serverIds) 
+    {
+        this.serverIds = serverIds;
+    }
+
+    public String getServerIds() 
+    {
+        return serverIds;
     }
     public void setStatus(String status) 
     {
@@ -98,6 +192,36 @@ public class OpsApp extends BaseEntity
         return status;
     }
 
+    public void setHealthCheckUrl(String healthCheckUrl) 
+    {
+        this.healthCheckUrl = healthCheckUrl;
+    }
+
+    public String getHealthCheckUrl() 
+    {
+        return healthCheckUrl;
+    }
+
+    public void setDeployTimeout(Integer deployTimeout) 
+    {
+        this.deployTimeout = deployTimeout;
+    }
+
+    public Integer getDeployTimeout() 
+    {
+        return deployTimeout;
+    }
+
+    public void setRetryCount(Integer retryCount) 
+    {
+        this.retryCount = retryCount;
+    }
+
+    public Integer getRetryCount() 
+    {
+        return retryCount;
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
@@ -107,7 +231,16 @@ public class OpsApp extends BaseEntity
             .append("deployPath", getDeployPath())
             .append("startScript", getStartScript())
             .append("monitorPorts", getMonitorPorts())
+            .append("owner", getOwner())
+            .append("techStack", getTechStack())
+            .append("deptId", getDeptId())
+            .append("stopScript", getStopScript())
+            .append("description", getDescription())
+            .append("serverIds", getServerIds())
             .append("status", getStatus())
+            .append("healthCheckUrl", getHealthCheckUrl())
+            .append("deployTimeout", getDeployTimeout())
+            .append("retryCount", getRetryCount())
             .append("createBy", getCreateBy())
             .append("createTime", getCreateTime())
             .append("updateBy", getUpdateBy())

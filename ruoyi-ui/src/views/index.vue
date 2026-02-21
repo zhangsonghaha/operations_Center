@@ -184,11 +184,11 @@ function initChart() {
     chartInstance = echarts.init(chartRef.value)
     
     const times = monitorLogs.value.map(item => {
-      const date = new Date(item.recordTime)
+      const date = new Date(item.createTime)
       return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
     })
-    const cpuData = monitorLogs.value.map(item => item.cpuLoad)
-    const memData = monitorLogs.value.map(item => item.memoryLoad)
+    const cpuData = monitorLogs.value.map(item => item.cpuUsage)
+    const memData = monitorLogs.value.map(item => item.memoryUsage)
 
     const option = {
       tooltip: {

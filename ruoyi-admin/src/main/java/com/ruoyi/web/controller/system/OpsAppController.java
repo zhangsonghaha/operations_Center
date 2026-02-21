@@ -23,6 +23,10 @@ import com.ruoyi.common.constant.UserConstants;
 import com.ruoyi.web.domain.OpsApp;
 import com.ruoyi.web.service.IOpsAppService;
 
+import org.springframework.web.multipart.MultipartFile;
+import com.ruoyi.common.utils.file.FileUploadUtils;
+import com.ruoyi.common.config.RuoYiConfig;
+
 /**
  * 应用注册Controller
  * 
@@ -34,6 +38,22 @@ public class OpsAppController extends BaseController
 {
     @Autowired
     private IOpsAppService opsAppService;
+
+    /**
+     * 上传应用包
+     */
+    @PreAuthorize("@ss.hasPermi('ops:app:add')")
+    @Log(title = "应用包上传", businessType = BusinessType.INSERT)
+    @PostMapping("/upload")
+    public AjaxResult upload(MultipartFile file) throws Exception
+    {
+        if (file == null)
+        {
+            return AjaxResult.error("上传文件不能为空");
+        }
+        String filePath = FileUploadUtils.upload(RuoYiConfig.getUploadPath(), file);
+        return AjaxResult.success(filePath);
+    }
 
     /**
      * 查询应用注册列表

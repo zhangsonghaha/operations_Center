@@ -58,3 +58,74 @@ export function getCodeImg() {
     timeout: 20000
   })
 }
+
+// 获取登录二维码
+export function getQrCode() {
+  return request({
+    url: '/login/qr/code',
+    headers: {
+      isToken: false
+    },
+    method: 'get'
+  })
+}
+
+// 检查二维码状态
+export function checkQrCode(uuid) {
+  return request({
+    url: '/login/qr/check',
+    headers: {
+      isToken: false
+    },
+    method: 'get',
+    params: { uuid }
+  })
+}
+
+// 模拟扫描二维码 (仅测试用)
+export function scanQrCode(uuid) {
+  return request({
+    url: '/login/qr/scan',
+    headers: {
+      isToken: false
+    },
+    method: 'post',
+    data: { uuid }
+  })
+}
+
+// 模拟确认登录 (仅测试用)
+export function confirmQrCode(uuid, username = '') {
+  return request({
+    url: '/login/qr/confirm',
+    headers: {
+      isToken: false
+    },
+    method: 'post',
+    data: { uuid, username }
+  })
+}
+
+// 绑定并登录
+export function bindQrUser(uuid, username, password) {
+  return request({
+    url: '/login/qr/bind',
+    headers: {
+      isToken: false
+    },
+    method: 'post',
+    data: { uuid, username, password }
+  })
+}
+
+// 微信扫码登录 (提交Code)
+export function wechatLogin(uuid, code) {
+  return request({
+    url: '/login/qr/wechat',
+    headers: {
+      isToken: false
+    },
+    method: 'post',
+    data: { uuid, code }
+  })
+}

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.web.mapper.OpsDeployTemplateVersionMapper">
+    
+    <resultMap type="OpsDeployTemplateVersion" id="OpsDeployTemplateVersionResult">
+        <result property="id"    column="id"    />
+        <result property="templateId"    column="template_id"    />
+        <result property="version"    column="version"    />
+        <result property="scriptContent"    column="script_content"    />
+        <result property="sha256"    column="sha256"    />
+        <result property="guideContent"    column="guide_content"    />
+        <result property="changeLog"    column="change_log"    />
+        <result property="creator"    column="creator"    />
+        <result property="createTime"    column="create_time"    />
+    </resultMap>
+
+    <sql id="selectOpsDeployTemplateVersionVo">
+        select id, template_id, version, script_content, sha256, guide_content, change_log, creator, create_time from ops_deploy_template_version
+    </sql>
+
+    <select id="selectOpsDeployTemplateVersionList" parameterType="OpsDeployTemplateVersion" resultMap="OpsDeployTemplateVersionResult">
+        <include refid="selectOpsDeployTemplateVersionVo"/>
+        <where>  
+            <if test="templateId != null "> and template_id = #{templateId}</if>
+            <if test="version != null  and version != ''"> and version = #{version}</if>
+            <if test="sha256 != null  and sha256 != ''"> and sha256 = #{sha256}</if>
+        </where>
+        order by create_time desc
+    </select>
+    
+    <select id="selectOpsDeployTemplateVersionById" parameterType="Long" resultMap="OpsDeployTemplateVersionResult">
+        <include refid="selectOpsDeployTemplateVersionVo"/>
+        where id = #{id}
+    </select>
+        
+    <insert id="insertOpsDeployTemplateVersion" parameterType="OpsDeployTemplateVersion" useGeneratedKeys="true" keyProperty="id">
+        insert into ops_deploy_template_version
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="templateId != null">template_id,</if>
+            <if test="version != null and version != ''">version,</if>
+            <if test="scriptContent != null and scriptContent != ''">script_content,</if>
+            <if test="sha256 != null">sha256,</if>
+            <if test="guideContent != null">guide_content,</if>
+            <if test="changeLog != null">change_log,</if>
+            <if test="creator != null">creator,</if>
+            <if test="createTime != null">create_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="templateId != null">#{templateId},</if>
+            <if test="version != null and version != ''">#{version},</if>
+            <if test="scriptContent != null and scriptContent != ''">#{scriptContent},</if>
+            <if test="sha256 != null">#{sha256},</if>
+            <if test="guideContent != null">#{guideContent},</if>
+            <if test="changeLog != null">#{changeLog},</if>
+            <if test="creator != null">#{creator},</if>
+            <if test="createTime != null">#{createTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateOpsDeployTemplateVersion" parameterType="OpsDeployTemplateVersion">
+        update ops_deploy_template_version
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="templateId != null">template_id = #{templateId},</if>
+            <if test="version != null and version != ''">version = #{version},</if>
+            <if test="scriptContent != null and scriptContent != ''">script_content = #{scriptContent},</if>
+            <if test="sha256 != null">sha256 = #{sha256},</if>
+            <if test="guideContent != null">guide_content = #{guideContent},</if>
+            <if test="changeLog != null">change_log = #{changeLog},</if>
+            <if test="creator != null">creator = #{creator},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteOpsDeployTemplateVersionById" parameterType="Long">
+        delete from ops_deploy_template_version where id = #{id}
+    </delete>
+
+    <delete id="deleteOpsDeployTemplateVersionByIds" parameterType="Long">
+        delete from ops_deploy_template_version where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>
