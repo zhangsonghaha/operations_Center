@@ -245,7 +245,7 @@
 
     <!-- 流程追踪对话框 -->
     <el-dialog title="流程追踪" v-model="processOpen" width="1000px" append-to-body destroy-on-close>
-      <div v-if="bpmnXml" style="height: 500px; border: 1px solid #dcdfe6;">
+      <div v-if="bpmnXml" style="height: 500px; border: 1px solid #dcdfe6; position: relative;">
         <BpmnViewer :xml="bpmnXml" :activeActivityIds="activeActivityIds" :activeTaskInfo="activeTaskInfo" />
       </div>
       <div v-else style="text-align: center; padding: 20px;">
@@ -466,10 +466,12 @@ function handleViewProcess(row) {
   if (row.processInstanceId) {
     bpmnXml.value = "";
     activeActivityIds.value = [];
+    activeTaskInfo.value = [];
     processOpen.value = true;
     getProcessProgress(row.processInstanceId).then(res => {
       bpmnXml.value = res.data.bpmnXml;
       activeActivityIds.value = res.data.activeActivityIds || [];
+      activeTaskInfo.value = res.data.activeTaskInfo || [];
     }).catch(() => {
       proxy.$modal.msgError("获取流程进度失败");
       processOpen.value = false;

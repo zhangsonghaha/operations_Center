@@ -146,6 +146,17 @@ public class OpsReleaseApplyController extends BaseController
         opsReleaseApplyService.processApproval(opsReleaseApply.getId(), opsReleaseApply.getStatus(), opsReleaseApply.getAuditReason());
         return AjaxResult.success();
     }
+    
+    /**
+     * One-click approval for Super Admin
+     */
+    @PreAuthorize("@ss.hasRole('admin')")
+    @Log(title = "Super Admin One-Click Approval", businessType = BusinessType.UPDATE)
+    @PutMapping("/superAudit/{id}")
+    public AjaxResult superAudit(@PathVariable Long id) {
+        opsReleaseApplyService.superAdminApprove(id);
+        return AjaxResult.success();
+    }
 
     /**
      * Execute Release

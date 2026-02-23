@@ -25,6 +25,9 @@
               />
             </el-select>
           </el-form-item>
+          <el-form-item label="流程Key" prop="processKey">
+            <el-input v-model="queryParams.processKey" placeholder="自定义流程Key" style="width: 200px;" @change="handleQuery" />
+          </el-form-item>
           <el-form-item>
             <el-button type="primary" icon="Search" size="small" @click="handleQuery">刷新配置</el-button>
             <el-button type="info" icon="View" size="small" @click="handleViewDeployed">查看已部署流程</el-button>
@@ -228,7 +231,8 @@ const data = reactive({
     pageNum: 1,
     pageSize: 100, // Load all for drag and drop
     env: "prod", // Default to prod
-    appId: 0     // Default to global
+    appId: 0,    // Default to global
+    processKey: "release_approval_0_prod"
   },
   rules: {
     env: [{ required: true, message: "环境不能为空", trigger: "change" }],
@@ -426,7 +430,15 @@ onMounted(() => {
   getList();
 });
 
+// Watch env and appId to update processKey automatically
+watch(() => [queryParams.value.env, queryParams.value.appId], () => {
+  const a = queryParams.value.appId || 0;
+  const e = queryParams.value.env || 'prod';
+  queryParams.value.processKey = `release_approval_${a}_${e}`;
+});
+
 function processKeyComputed() {
+  if (queryParams.value.processKey) return queryParams.value.processKey;
   const a = queryParams.value.appId || 0;
   const e = queryParams.value.env || 'prod';
   return `release_approval_${a}_${e}`;
@@ -529,8 +541,26 @@ function deployBpmn() {
   }
   const key = processKeyComputed();
   const name = processNameComputed();
+  
+  // 强制替换 XML 中的 process id 和 name，确保与顶部输入框一致
+  let xml = bpmnXml.value;
+  // 替换 process id (支持带命名空间的 process 标签)
+  // 查找 id="xxx" 并在 process 标签内
+  // 正则说明：匹配 <...process... id="..." ...>
+  // 注意：这里简单假设 id 属性在 process 标签的第一行或附近，且格式标准
+  // 更严谨的做法是解析 XML，但前端引入 xml parser 较重
+  
+  // 尝试替换 process id="xxx"
+  if (xml.match(/<[^>]*process[^>]*\s+id="([^"]+)"/)) {
+    xml = xml.replace(/(<[^>]*process[^>]*\s+id=")([^"]+)(")/, `$1${key}$3`);
+  }
+  // 尝试替换 process name="xxx"
+  if (xml.match(/<[^>]*process[^>]*\s+name="([^"]+)"/)) {
+    xml = xml.replace(/(<[^>]*process[^>]*\s+name=")([^"]+)(")/, `$1${name}$3`);
+  }
+  
   deploying.value = true;
-  deployBpmnXml({ processKey: key, processName: name, bpmnXml: bpmnXml.value })
+  deployBpmnXml({ processKey: key, processName: name, bpmnXml: xml })
     .then(res => {
       proxy.$modal.msgSuccess('部署成功');
     })

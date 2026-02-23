@@ -90,4 +90,11 @@ public interface IOpsReleaseApplyService
      * @return Release Apply List
      */
     public List<OpsReleaseApply> selectPendingApprovals(OpsReleaseApply query);
+    
+    /**
+     * Super Admin One-Click Approval
+     *
+     * @param id Release Apply ID
+     */
+    public void superAdminApprove(Long id);
 }

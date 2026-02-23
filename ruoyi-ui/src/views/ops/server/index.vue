@@ -1,6 +1,16 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
+      <el-form-item label="所属环境" prop="envCode">
+        <el-select v-model="queryParams.envCode" placeholder="请选择环境" clearable>
+          <el-option
+            v-for="item in environmentOptions"
+            :key="item.code"
+            :label="item.name"
+            :value="item.code"
+          />
+        </el-select>
+      </el-form-item>
       <el-form-item label="服务器名称" prop="serverName" label-width="100px">
         <el-input
           v-model="queryParams.serverName"
@@ -85,6 +95,11 @@
       <el-table-column label="服务器名称" align="center" prop="serverName" />
       <el-table-column label="公网IP" align="center" prop="publicIp" />
       <el-table-column label="内网IP" align="center" prop="privateIp" />
+      <el-table-column label="所属环境" align="center" prop="envCode">
+        <template #default="scope">
+          {{ getEnvironmentName(scope.row.envCode) }}
+        </template>
+      </el-table-column>
       <el-table-column label="SSH端口" align="center" prop="serverPort" />
       <el-table-column label="所属机房" align="center" prop="dataCenter" />
       <el-table-column label="状态" align="center" prop="status">
@@ -129,6 +144,16 @@
     <!-- 添加或修改服务器资产对话框 -->
     <el-dialog :title="title" v-model="open" width="600px" append-to-body>
       <el-form ref="serverRef" :model="form" :rules="rules" label-width="100px">
+        <el-form-item label="所属环境" prop="envCode">
+          <el-select v-model="form.envCode" placeholder="请选择环境">
+            <el-option
+              v-for="item in environmentOptions"
+              :key="item.code"
+              :label="item.name"
+              :value="item.code"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item label="服务器名称" prop="serverName">
           <el-input v-model="form.serverName" placeholder="请输入服务器名称" />
         </el-form-item>
@@ -192,6 +217,7 @@
 
 <script setup name="Server">
 import { listServer, getServer, delServer, addServer, updateServer, checkConnection } from "@/api/ops/server";
+import { listAllEnvironment } from "@/api/ops/environment";
 import { Search, Refresh, Plus, Edit, Delete, Download, Switch, Upload, Monitor, DArrowRight, DataLine, FolderOpened } from '@element-plus/icons-vue';
 import { ElMessageBox } from 'element-plus'
 
@@ -199,6 +225,7 @@ const { proxy } = getCurrentInstance();
 const router = useRouter();
 
 const serverList = ref([]);
+const environmentOptions = ref([]);
 const open = ref(false);
 const loading = ref(true);
 const showSearch = ref(true);
@@ -216,7 +243,8 @@ const data = reactive({
     serverName: null,
     publicIp: null,
     privateIp: null,
-    status: null
+    status: null,
+    envCode: null
   },
   rules: {
     serverName: [
@@ -227,11 +255,27 @@ const data = reactive({
     ],
     username: [
       { required: true, message: "账号不能为空", trigger: "blur" }
+    ],
+    envCode: [
+      { required: true, message: "所属环境不能为空", trigger: "change" }
     ]
   }
 });
 
 const { queryParams, form, rules } = toRefs(data);
+
+/** 查询环境列表 */
+function getEnvironmentList() {
+  listAllEnvironment().then(response => {
+    environmentOptions.value = response.data;
+  });
+}
+
+/** 获取环境名称 */
+function getEnvironmentName(code) {
+  const env = environmentOptions.value.find(item => item.code === code);
+  return env ? env.name : code;
+}
 
 /** 查询服务器资产列表 */
 function getList() {
@@ -256,6 +300,7 @@ function reset() {
     serverName: null,
     publicIp: null,
     privateIp: null,
+    envCode: null,
     serverPort: 22,
     username: "root",
     password: null,
@@ -421,6 +466,7 @@ function handleFileChange(file) {
   reader.readAsText(file.raw);
 }
 
+getEnvironmentList();
 getList();
 </script>
 

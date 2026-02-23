@@ -85,8 +85,8 @@
         <el-collapse v-model="activePropsNames">
           <el-collapse-item title="常规" name="general">
             <el-form :model="elementForm" label-width="80px" size="small">
-              <el-form-item label="ID">
-                <el-input v-model="elementForm.id" @change="updateId" />
+              <el-form-item label="流程标识">
+                <el-input v-model="elementForm.id" @change="updateId" placeholder="即Process Key" />
               </el-form-item>
               <el-form-item label="名称">
                 <el-input v-model="elementForm.name" @change="updateName" />
@@ -110,8 +110,8 @@
             <el-form :model="elementForm" label-width="80px" size="small">
               <el-form-item label="审批类型">
                 <el-radio-group v-model="elementForm.assigneeType" @change="updateAssigneeType">
-                  <el-radio value="user">指定用户</el-radio>
-                  <el-radio value="group">候选组</el-radio>
+                  <el-radio label="user">指定用户</el-radio>
+                  <el-radio label="group">候选组</el-radio>
                 </el-radio-group>
               </el-form-item>
               

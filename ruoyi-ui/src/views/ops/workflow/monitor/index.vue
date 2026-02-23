@@ -80,8 +80,9 @@
 
     <!-- 流程进度对话框 -->
     <el-dialog title="流程进度" v-model="openView" width="1000px" append-to-body destroy-on-close>
-      <div style="height: 500px; border: 1px solid #dcdfe6;">
+      <div style="height: 500px; border: 1px solid #dcdfe6; position: relative;">
         <BpmnViewer 
+          v-if="bpmnXml"
           :xml="bpmnXml" 
           :activeActivityIds="activeActivityIds" 
           :activeTaskInfo="activeTaskInfo"

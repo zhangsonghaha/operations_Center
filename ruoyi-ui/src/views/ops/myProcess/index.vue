@@ -7,6 +7,21 @@
         </div>
       </template>
 
+      <el-form :model="queryParams" ref="queryRef" :inline="true" label-width="68px">
+        <el-form-item label="流程名称" prop="name">
+          <el-input
+            v-model="queryParams.name"
+            placeholder="请输入流程名称"
+            clearable
+            @keyup.enter="handleQuery"
+          />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
+          <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+        </el-form-item>
+      </el-form>
+
       <el-table v-loading="loading" :data="processList">
         <el-table-column label="流程实例ID" prop="id" align="center" width="100" />
         <el-table-column label="流程名称" prop="processDefinitionName" align="center" />
@@ -62,10 +77,12 @@
 
     <!-- 流程进度对话框 -->
     <el-dialog title="流程进度" v-model="openView" width="1000px" append-to-body destroy-on-close>
-      <div style="height: 500px; border: 1px solid #dcdfe6;">
+      <div style="height: 500px; border: 1px solid #dcdfe6; position: relative;">
         <BpmnViewer 
+          v-if="bpmnXml"
           :xml="bpmnXml" 
           :activeActivityIds="activeActivityIds" 
+          :activeTaskInfo="activeTaskInfo"
         />
       </div>
     </el-dialog>
@@ -85,11 +102,13 @@ const total = ref(0);
 const openView = ref(false);
 const bpmnXml = ref("");
 const activeActivityIds = ref([]);
+const activeTaskInfo = ref([]);
 
 const data = reactive({
   queryParams: {
     pageNum: 1,
-    pageSize: 10
+    pageSize: 10,
+    name: undefined
   }
 });
 
@@ -104,14 +123,26 @@ function getList() {
   });
 }
 
+function handleQuery() {
+  queryParams.value.pageNum = 1;
+  getList();
+}
+
+function resetQuery() {
+  proxy.resetForm("queryRef");
+  handleQuery();
+}
+
 function handleView(row) {
   bpmnXml.value = "";
   activeActivityIds.value = [];
+  activeTaskInfo.value = [];
   openView.value = true;
   
   getProcessProgress(row.id).then(res => {
     bpmnXml.value = res.data.bpmnXml;
     activeActivityIds.value = res.data.activeActivityIds || [];
+    activeTaskInfo.value = res.data.activeTaskInfo || [];
   });
 }
 

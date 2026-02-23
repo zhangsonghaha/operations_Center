@@ -44,6 +44,9 @@ public class OpsServer extends BaseEntity
     /** 所属分组 */
     private Long groupId;
 
+    /** 所属环境代码 */
+    private String envCode;
+
     /** 状态（0正常 1停用） */
     private String status;
 
@@ -146,6 +149,15 @@ public class OpsServer extends BaseEntity
     {
         return groupId;
     }
+    public void setEnvCode(String envCode) 
+    {
+        this.envCode = envCode;
+    }
+
+    public String getEnvCode() 
+    {
+        return envCode;
+    }
     public void setStatus(String status) 
     {
         this.status = status;
@@ -170,6 +182,7 @@ public class OpsServer extends BaseEntity
             .append("privateKey", getPrivateKey())
             .append("dataCenter", getDataCenter())
             .append("groupId", getGroupId())
+            .append("envCode", getEnvCode())
             .append("status", getStatus())
             .append("remark", getRemark())
             .append("createBy", getCreateBy())

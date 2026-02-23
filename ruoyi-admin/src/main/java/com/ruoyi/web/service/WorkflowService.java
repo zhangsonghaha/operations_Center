@@ -178,13 +178,17 @@ public class WorkflowService {
     }
     public List<Task> getTasksForUser(String userId, List<String> groupIds) {
         if (groupIds == null || groupIds.isEmpty()) {
-            return taskService.createTaskQuery().taskAssignee(userId).list();
+            return taskService.createTaskQuery()
+                    .taskCandidateOrAssigned(userId)
+                    .orderByTaskCreateTime().desc()
+                    .list();
         }
         return taskService.createTaskQuery()
                 .or()
-                .taskAssignee(userId)
+                .taskCandidateOrAssigned(userId)
                 .taskCandidateGroupIn(groupIds)
                 .endOr()
+                .orderByTaskCreateTime().desc()
                 .list();
     }
     
