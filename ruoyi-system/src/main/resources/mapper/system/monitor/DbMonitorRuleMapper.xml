@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.monitor.DbMonitorRuleMapper">
+    
+    <resultMap type="DbMonitorRule" id="DbMonitorRuleResult">
+        <result property="ruleId"    column="rule_id"    />
+        <result property="connId"    column="conn_id"    />
+        <result property="ruleType"    column="rule_type"    />
+        <result property="metricName"    column="metric_name"    />
+        <result property="condition"    column="condition"    />
+        <result property="threshold"    column="threshold"    />
+        <result property="enabled"    column="enabled"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+
+    <sql id="selectDbMonitorRuleVo">
+        select rule_id, conn_id, rule_type, metric_name, `condition`, threshold, enabled, create_by, create_time, update_by, update_time, remark from sys_db_monitor_rule
+    </sql>
+
+    <select id="selectDbMonitorRuleList" parameterType="DbMonitorRule" resultMap="DbMonitorRuleResult">
+        <include refid="selectDbMonitorRuleVo"/>
+        <where>  
+            <if test="connId != null "> and conn_id = #{connId}</if>
+            <if test="ruleType != null  and ruleType != ''"> and rule_type = #{ruleType}</if>
+            <if test="metricName != null  and metricName != ''"> and metric_name like concat('%', #{metricName}, '%')</if>
+            <if test="condition != null  and condition != ''"> and `condition` = #{condition}</if>
+            <if test="enabled != null  and enabled != ''"> and enabled = #{enabled}</if>
+        </where>
+    </select>
+    
+    <select id="selectDbMonitorRuleById" parameterType="Long" resultMap="DbMonitorRuleResult">
+        <include refid="selectDbMonitorRuleVo"/>
+        where rule_id = #{ruleId}
+    </select>
+        
+    <insert id="insertDbMonitorRule" parameterType="DbMonitorRule" useGeneratedKeys="true" keyProperty="ruleId">
+        insert into sys_db_monitor_rule
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="connId != null">conn_id,</if>
+            <if test="ruleType != null and ruleType != ''">rule_type,</if>
+            <if test="metricName != null and metricName != ''">metric_name,</if>
+            <if test="condition != null and condition != ''">`condition`,</if>
+            <if test="threshold != null">threshold,</if>
+            <if test="enabled != null and enabled != ''">enabled,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="remark != null">remark,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="connId != null">#{connId},</if>
+            <if test="ruleType != null and ruleType != ''">#{ruleType},</if>
+            <if test="metricName != null and metricName != ''">#{metricName},</if>
+            <if test="condition != null and condition != ''">#{condition},</if>
+            <if test="threshold != null">#{threshold},</if>
+            <if test="enabled != null and enabled != ''">#{enabled},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="remark != null">#{remark},</if>
+         </trim>
+    </insert>
+
+    <update id="updateDbMonitorRule" parameterType="DbMonitorRule">
+        update sys_db_monitor_rule
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="connId != null">conn_id = #{connId},</if>
+            <if test="ruleType != null and ruleType != ''">rule_type = #{ruleType},</if>
+            <if test="metricName != null and metricName != ''">metric_name = #{metricName},</if>
+            <if test="condition != null and condition != ''">`condition` = #{condition},</if>
+            <if test="threshold != null">threshold = #{threshold},</if>
+            <if test="enabled != null and enabled != ''">enabled = #{enabled},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where rule_id = #{ruleId}
+    </update>
+
+    <delete id="deleteDbMonitorRuleById" parameterType="Long">
+        delete from sys_db_monitor_rule where rule_id = #{ruleId}
+    </delete>
+
+    <delete id="deleteDbMonitorRuleByIds" parameterType="String">
+        delete from sys_db_monitor_rule where rule_id in 
+        <foreach item="ruleId" collection="array" open="(" separator="," close=")">
+            #{ruleId}
+        </foreach>
+    </delete>
+</mapper>

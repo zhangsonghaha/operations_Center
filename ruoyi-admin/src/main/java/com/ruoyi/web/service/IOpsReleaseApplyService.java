@@ -97,4 +97,11 @@ public interface IOpsReleaseApplyService
      * @param id Release Apply ID
      */
     public void superAdminApprove(Long id);
+
+    /**
+     * Cancel Release Apply (Withdraw)
+     *
+     * @param id Release Apply ID
+     */
+    public void cancelReleaseApply(Long id);
 }

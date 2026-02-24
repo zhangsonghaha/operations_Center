@@ -177,17 +177,24 @@ public class WorkflowService {
             true);
     }
     public List<Task> getTasksForUser(String userId, List<String> groupIds) {
-        if (groupIds == null || groupIds.isEmpty()) {
-            return taskService.createTaskQuery()
-                    .taskCandidateOrAssigned(userId)
-                    .orderByTaskCreateTime().desc()
-                    .list();
+        // Default behavior for backward compatibility or when userName is not available
+        return getTasksForUser(userId, null, groupIds);
+    }
+
+    public List<Task> getTasksForUser(String userId, String userName, List<String> groupIds) {
+        org.flowable.task.api.TaskQuery query = taskService.createTaskQuery().or();
+        
+        query.taskCandidateOrAssigned(userId);
+        
+        if (userName != null && !userName.isEmpty()) {
+            query.taskCandidateOrAssigned(userName);
         }
-        return taskService.createTaskQuery()
-                .or()
-                .taskCandidateOrAssigned(userId)
-                .taskCandidateGroupIn(groupIds)
-                .endOr()
+        
+        if (groupIds != null && !groupIds.isEmpty()) {
+            query.taskCandidateGroupIn(groupIds);
+        }
+        
+        return query.endOr()
                 .orderByTaskCreateTime().desc()
                 .list();
     }

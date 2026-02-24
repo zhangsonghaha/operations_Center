@@ -68,3 +68,11 @@ export function executeRelease(id) {
     method: 'post'
   })
 }
+
+// 撤销发布申请
+export function cancelRelease(id) {
+  return request({
+    url: '/ops/release/cancel/' + id,
+    method: 'post'
+  })
+}

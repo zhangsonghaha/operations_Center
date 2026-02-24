@@ -12,6 +12,14 @@
       <template v-if="appStore.device !== 'mobile'">
         <header-search id="header-search" class="right-menu-item" />
 
+        <el-tooltip content="消息中心" effect="dark" placement="bottom">
+          <div class="right-menu-item hover-effect" @click="router.push('/system/message')">
+            <el-badge :value="unreadCount" :max="99" :hidden="unreadCount === 0" class="message-badge">
+              <el-icon><Bell /></el-icon>
+            </el-badge>
+          </div>
+        </el-tooltip>
+
         <el-tooltip content="源码地址" effect="dark" placement="bottom">
           <ruo-yi-git id="ruoyi-git" class="right-menu-item hover-effect" />
         </el-tooltip>
@@ -59,6 +67,8 @@
 
 <script setup>
 import { ElMessageBox } from 'element-plus'
+import { Bell } from '@element-plus/icons-vue'
+import { getUnreadCount } from "@/api/system/message"
 import Breadcrumb from '@/components/Breadcrumb'
 import TopNav from '@/components/TopNav'
 import TopBar from './TopBar'
@@ -76,6 +86,40 @@ import useSettingsStore from '@/store/modules/settings'
 const appStore = useAppStore()
 const userStore = useUserStore()
 const settingsStore = useSettingsStore()
+const router = useRouter()
+
+const unreadCount = ref(0)
+let pollTimer = null
+
+onMounted(() => {
+    // 初始获取
+    if (userStore.token) {
+        fetchUnreadCount()
+        // 轮询 (30s)
+        pollTimer = setInterval(fetchUnreadCount, 30000)
+    }
+})
+
+onBeforeUnmount(() => {
+    if (pollTimer) {
+        clearInterval(pollTimer)
+    }
+})
+
+function fetchUnreadCount() {
+    getUnreadCount().then(res => {
+        unreadCount.value = res.data || 0
+        if (unreadCount.value > 0) {
+            // 浏览器通知
+            if (Notification.permission === 'granted') {
+                 // 简单防抖，这里每次轮询有新消息才弹太复杂，简化为有未读就弹或者只弹一次
+                 // 实际业务通常需要比较上次未读数
+            } else if (Notification.permission !== 'denied') {
+                Notification.requestPermission()
+            }
+        }
+    }).catch(() => {})
+}
 
 function toggleSideBar() {
   appStore.toggleSideBar()

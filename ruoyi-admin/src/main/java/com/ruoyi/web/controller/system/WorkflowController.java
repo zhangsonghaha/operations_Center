@@ -6,12 +6,17 @@ import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.system.service.ISysUserService;
+import com.ruoyi.system.service.ISysMessageService;
+import com.ruoyi.system.domain.SysMessage;
 import org.flowable.engine.HistoryService;
 import org.flowable.engine.RepositoryService;
 import org.flowable.engine.RuntimeService;
 import org.flowable.engine.TaskService;
 import org.flowable.engine.repository.Deployment;
 import org.flowable.task.api.Task;
+import org.flowable.engine.history.HistoricActivityInstance;
+import org.flowable.task.api.history.HistoricTaskInstance;
+import org.flowable.engine.task.Comment;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -49,6 +54,9 @@ public class WorkflowController extends BaseController {
     @Autowired
     private ISysUserService sysUserService;
     
+    @Autowired
+    private ISysMessageService messageService;
+
     @PreAuthorize("@ss.hasPermi('ops:workflow:list')")
     @GetMapping("/definition/list")
     public TableDataInfo listProcessDefinitions(
@@ -389,11 +397,98 @@ public class WorkflowController extends BaseController {
     }
     
     /**
-     * Remind assignee
+     * Remind assignee (Enhanced with SysMessage)
      */
     @PostMapping("/instance/{processInstanceId}/remind")
-    public AjaxResult remindAssignee(@PathVariable String processInstanceId) {
-        workflowService.remindProcessInstance(processInstanceId, String.valueOf(getUserId()));
-        return AjaxResult.success("已发送提醒");
+    public AjaxResult remindAssignee(@PathVariable String processInstanceId, @RequestBody(required = false) Map<String, String> body) {
+        String reason = body != null ? body.get("reason") : "请尽快处理";
+        
+        // 1. Find current active tasks
+        List<Task> tasks = taskService.createTaskQuery().processInstanceId(processInstanceId).list();
+        if (tasks.isEmpty()) {
+            return AjaxResult.error("流程已结束或无待办任务");
+        }
+        
+        int count = 0;
+        for (Task task : tasks) {
+            String assignee = task.getAssignee();
+            if (assignee != null) {
+                // Send SysMessage
+                try {
+                    SysMessage msg = new SysMessage();
+                    msg.setSenderId(getUserId());
+                    msg.setReceiverId(Long.valueOf(assignee));
+                    msg.setTitle("【催办】流程任务提醒");
+                    msg.setContent("您有一个待办任务 [" + task.getName() + "] 需要处理。<br/>催办原因: " + reason);
+                    msg.setMessageType("3"); // 3=催办
+                    msg.setBusinessId(processInstanceId);
+                    messageService.insertSysMessage(msg);
+                    count++;
+                } catch (Exception e) {
+                    // Ignore invalid assignee id
+                }
+            }
+        }
+        
+        if (count == 0) {
+            return AjaxResult.success("当前任务未分配具体人员，无法发送站内信催办");
+        }
+        return AjaxResult.success("已发送 " + count + " 条催办提醒");
+    }
+
+    /**
+     * Get node detail
+     */
+    @GetMapping("/node-detail/{procInstId}/{activityId}")
+    public AjaxResult getNodeDetail(@PathVariable String procInstId, @PathVariable String activityId) {
+        Map<String, Object> data = new HashMap<>();
+        
+        // 1. Find historic activity instance
+        List<HistoricActivityInstance> activities = historyService.createHistoricActivityInstanceQuery()
+                .processInstanceId(procInstId)
+                .activityId(activityId)
+                .orderByHistoricActivityInstanceEndTime().desc()
+                .list();
+        
+        if (activities.isEmpty()) {
+            return AjaxResult.error("未找到节点信息");
+        }
+        
+        // Take the latest one if multiple (loops)
+        HistoricActivityInstance activity = activities.get(0);
+        
+        data.put("activityName", activity.getActivityName());
+        data.put("startTime", activity.getStartTime());
+        data.put("endTime", activity.getEndTime());
+        data.put("durationInMillis", activity.getDurationInMillis());
+        data.put("activityType", activity.getActivityType());
+        
+        // 2. If it's a user task, get assignee and comments
+        if ("userTask".equals(activity.getActivityType()) && activity.getTaskId() != null) {
+             HistoricTaskInstance task = historyService.createHistoricTaskInstanceQuery()
+                     .taskId(activity.getTaskId())
+                     .singleResult();
+             
+             if (task != null) {
+                 data.put("assignee", task.getAssignee());
+                 if (task.getAssignee() != null) {
+                     try {
+                        SysUser user = sysUserService.selectUserById(Long.valueOf(task.getAssignee()));
+                        if (user != null) {
+                            data.put("assigneeName", user.getNickName());
+                        }
+                     } catch (Exception e) {}
+                 }
+                 
+                 // Comments
+                 List<Comment> comments = taskService.getTaskComments(task.getId());
+                 if (comments != null && !comments.isEmpty()) {
+                     List<String> msgs = comments.stream().map(Comment::getFullMessage).collect(Collectors.toList());
+                     data.put("comments", msgs);
+                 }
+             }
+        }
+        
+        return AjaxResult.success(data);
     }
 }

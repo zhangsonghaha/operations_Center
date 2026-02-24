@@ -78,18 +78,29 @@ const options = ref({
   debug: "warn",
   modules: {
     // 工具栏配置
-    toolbar: [
-      ["bold", "italic", "underline", "strike"],      // 加粗 斜体 下划线 删除线
-      ["blockquote", "code-block"],                   // 引用  代码块
-      [{ list: "ordered" }, { list: "bullet" }],      // 有序、无序列表
-      [{ indent: "-1" }, { indent: "+1" }],           // 缩进
-      [{ size: ["small", false, "large", "huge"] }],  // 字体大小
-      [{ header: [1, 2, 3, 4, 5, 6, false] }],        // 标题
-      [{ color: [] }, { background: [] }],            // 字体颜色、字体背景颜色
-      [{ align: [] }],                                // 对齐方式
-      ["clean"],                                      // 清除文本格式
-      ["link", "image", "video"]                      // 链接、图片、视频
-    ],
+    toolbar: {
+      container: [
+        ["bold", "italic", "underline", "strike"],       // 加粗 斜体 下划线 删除线
+        ["blockquote", "code-block"],                    // 引用  代码块
+        [{ list: "ordered" }, { list: "bullet" }],       // 有序、无序列表
+        [{ indent: "-1" }, { indent: "+1" }],            // 缩进
+        [{ size: ["small", false, "large", "huge"] }],   // 字体大小
+        [{ header: [1, 2, 3, 4, 5, 6, false] }],         // 标题
+        [{ color: [] }, { background: [] }],             // 字体颜色、字体背景颜色
+        [{ align: [] }],                                 // 对齐方式
+        ["clean"],                                       // 清除文本格式
+        ["link", "image", "video"],                      // 链接、图片、视频
+        ["upload"]                                       // 自定义上传按钮
+      ],
+      handlers: {
+          'upload': function (value) {
+              if (value) {
+                  uploadType.value = 'file';
+                  proxy.$refs.uploadRef.click();
+              }
+          }
+      }
+    }
   },
   placeholder: "请输入内容",
   readOnly: props.readOnly
@@ -118,26 +129,52 @@ onMounted(() => {
   if (props.type == 'url') {
     let quill = quillEditorRef.value.getQuill()
     let toolbar = quill.getModule("toolbar")
+    
+    // 自定义 image 处理器
     toolbar.addHandler("image", (value) => {
+      uploadType.value = 'image'
       if (value) {
         proxy.$refs.uploadRef.click()
       } else {
         quill.format("image", false)
       }
     })
+    
+    // 手动渲染上传按钮图标
+    // 由于quill初始化可能需要时间，延迟执行
+    setTimeout(() => {
+        const uploadButton = document.querySelector('.ql-upload');
+        if (uploadButton) {
+            uploadButton.innerHTML = `<svg viewBox="0 0 1024 1024" width="18" height="18" style="vertical-align: middle;fill: #444;"><path d="M512 64a448 448 0 1 1 0 896 448 448 0 0 1 0-896z m0 83.2a364.8 364.8 0 1 0 0 729.6 364.8 364.8 0 0 0 0-729.6z m-38.4 256h76.8v256h166.4l-204.8 204.8-204.8-204.8h166.4V403.2z" /></svg>`;
+            uploadButton.title = "上传文件";
+        }
+    }, 100);
+    
     quill.root.addEventListener('paste', handlePasteCapture, true)
   }
 })
 
+// 新增：文件上传类型标记
+const uploadType = ref('image')
+
 // 上传前校检格式和大小
 function handleBeforeUpload(file) {
-  const type = ["image/jpeg", "image/jpg", "image/png", "image/svg"]
-  const isJPG = type.includes(file.type)
-  //检验文件格式
-  if (!isJPG) {
-    proxy.$modal.msgError(`图片格式错误!`)
-    return false
+  // 图片校验
+  if (uploadType.value === 'image') {
+      const type = ["image/jpeg", "image/jpg", "image/png", "image/svg"]
+      const isJPG = type.includes(file.type)
+      if (!isJPG) {
+        proxy.$modal.msgError(`图片格式错误!`)
+        return false
+      }
+  } else {
+      // 文件校验 (可扩展更多类型)
+      // 允许常见文档类型
+      const type = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "text/plain", "application/zip", "application/x-zip-compressed"]
+      // 简单放行所有或者指定类型，这里暂时放行常见类型
+      // 若依默认 common/upload 接口支持多种文件
   }
+  
   // 校检文件大小
   if (props.fileSize) {
     const isLt = file.size / 1024 / 1024 < props.fileSize
@@ -157,12 +194,22 @@ function handleUploadSuccess(res, file) {
     let quill = toRaw(quillEditorRef.value).getQuill()
     // 获取光标位置
     let length = quill.selection.savedRange.index
-    // 插入图片，res.url为服务器返回的图片链接地址
-    quill.insertEmbed(length, "image", import.meta.env.VITE_APP_BASE_API + res.fileName)
+    
+    if (uploadType.value === 'image') {
+        // 插入图片
+        quill.insertEmbed(length, "image", res.url)
+    } else {
+        // 插入文件链接
+        // 确保 url 是字符串
+        const url = String(res.url);
+        // 使用标准 insertText 签名: index, text, format, value
+        quill.insertText(length, file.name, 'link', url);
+    }
+    
     // 调整光标到最后
-    quill.setSelection(length + 1)
+    quill.setSelection(length + file.name.length + 1)
   } else {
-    proxy.$modal.msgError("图片插入失败")
+    proxy.$modal.msgError("插入失败")
   }
 }
 

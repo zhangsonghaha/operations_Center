@@ -75,11 +75,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             a.status = '1'
             and a.apply_user_id &lt;&gt; #{userId}
             AND (
-                t.ASSIGNEE_ = #{userId}
+                t.ASSIGNEE_ = #{userId} OR t.ASSIGNEE_ = #{userName}
                 OR (
                     i.TYPE_ = 'candidate'
                     AND (
-                        i.USER_ID_ = #{userId} 
+                        (i.USER_ID_ = #{userId} OR i.USER_ID_ = #{userName})
                         <if test="roleIds != null and roleIds.size() > 0">
                         OR i.GROUP_ID_ IN
                         <foreach item="roleId" collection="roleIds" open="(" separator="," close=")">

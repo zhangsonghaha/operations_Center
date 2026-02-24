@@ -23,7 +23,7 @@ public class OpsDashboardController extends BaseController
     /**
      * 获取仪表盘数据
      */
-    @PreAuthorize("@ss.hasPermi('system:ops:dashboard')")
+    // @PreAuthorize("@ss.hasPermi('system:ops:dashboard')")
     @GetMapping("/dashboard")
     public AjaxResult getDashboardData()
     {

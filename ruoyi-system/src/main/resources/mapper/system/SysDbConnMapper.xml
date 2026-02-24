@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.SysDbConnMapper">
+    
+    <resultMap type="SysDbConn" id="SysDbConnResult">
+        <result property="connId"    column="conn_id"    />
+        <result property="connName"    column="conn_name"    />
+        <result property="dbType"    column="db_type"    />
+        <result property="host"    column="host"    />
+        <result property="port"    column="port"    />
+        <result property="username"    column="username"    />
+        <result property="password"    column="password"    />
+        <result property="dbName"    column="db_name"    />
+        <result property="status"    column="status"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+
+    <sql id="selectSysDbConnVo">
+        select conn_id, conn_name, db_type, host, port, username, password, db_name, status, create_by, create_time, update_by, update_time, remark from sys_db_conn
+    </sql>
+
+    <select id="selectSysDbConnList" parameterType="SysDbConn" resultMap="SysDbConnResult">
+        <include refid="selectSysDbConnVo"/>
+        <where>  
+            <if test="connName != null  and connName != ''"> and conn_name like concat('%', #{connName}, '%')</if>
+            <if test="dbType != null  and dbType != ''"> and db_type = #{dbType}</if>
+            <if test="host != null  and host != ''"> and host like concat('%', #{host}, '%')</if>
+            <if test="username != null  and username != ''"> and username like concat('%', #{username}, '%')</if>
+            <if test="status != null  and status != ''"> and status = #{status}</if>
+        </where>
+    </select>
+    
+    <select id="selectSysDbConnByConnId" parameterType="Long" resultMap="SysDbConnResult">
+        <include refid="selectSysDbConnVo"/>
+        where conn_id = #{connId}
+    </select>
+        
+    <insert id="insertSysDbConn" parameterType="SysDbConn" useGeneratedKeys="true" keyProperty="connId">
+        insert into sys_db_conn
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="connName != null and connName != ''">conn_name,</if>
+            <if test="dbType != null">db_type,</if>
+            <if test="host != null and host != ''">host,</if>
+            <if test="port != null and port != ''">port,</if>
+            <if test="username != null and username != ''">username,</if>
+            <if test="password != null and password != ''">password,</if>
+            <if test="dbName != null and dbName != ''">db_name,</if>
+            <if test="status != null">status,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="connName != null and connName != ''">#{connName},</if>
+            <if test="dbType != null">#{dbType},</if>
+            <if test="host != null and host != ''">#{host},</if>
+            <if test="port != null and port != ''">#{port},</if>
+            <if test="username != null and username != ''">#{username},</if>
+            <if test="password != null and password != ''">#{password},</if>
+            <if test="dbName != null and dbName != ''">#{dbName},</if>
+            <if test="status != null">#{status},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+         </trim>
+    </insert>
+
+    <update id="updateSysDbConn" parameterType="SysDbConn">
+        update sys_db_conn
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="connName != null and connName != ''">conn_name = #{connName},</if>
+            <if test="dbType != null">db_type = #{dbType},</if>
+            <if test="host != null and host != ''">host = #{host},</if>
+            <if test="port != null and port != ''">port = #{port},</if>
+            <if test="username != null and username != ''">username = #{username},</if>
+            <if test="password != null and password != ''">password = #{password},</if>
+            <if test="dbName != null and dbName != ''">db_name = #{dbName},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where conn_id = #{connId}
+    </update>
+
+    <delete id="deleteSysDbConnByConnId" parameterType="Long">
+        delete from sys_db_conn where conn_id = #{connId}
+    </delete>
+
+    <delete id="deleteSysDbConnByConnIds" parameterType="String">
+        delete from sys_db_conn where conn_id in 
+        <foreach item="connId" collection="array" open="(" separator="," close=")">
+            #{connId}
+        </foreach>
+    </delete>
+</mapper>

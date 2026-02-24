@@ -62,6 +62,14 @@
               icon="Bell"
               @click="handleRemind(scope.row)"
             >催办</el-button>
+            <el-button
+              v-if="!scope.row.endTime"
+              size="small"
+              type="text"
+              icon="CircleClose"
+              class="danger-text"
+              @click="handleCancel(scope.row)"
+            >撤销</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -83,6 +91,7 @@
           :xml="bpmnXml" 
           :activeActivityIds="activeActivityIds" 
           :activeTaskInfo="activeTaskInfo"
+          :processInstanceId="currentProcessInstanceId"
         />
       </div>
     </el-dialog>
@@ -91,6 +100,7 @@
 
 <script setup name="MyProcess">
 import { listMyStartedProcesses, getProcessProgress, remindProcessInstance } from "@/api/ops/workflow";
+import { cancelRelease } from "@/api/ops/release";
 import BpmnViewer from "@/components/BpmnViewer";
 import { getCurrentInstance, ref, reactive, toRefs, onMounted } from "vue";
 
@@ -103,6 +113,7 @@ const openView = ref(false);
 const bpmnXml = ref("");
 const activeActivityIds = ref([]);
 const activeTaskInfo = ref([]);
+const currentProcessInstanceId = ref("");
 
 const data = reactive({
   queryParams: {
@@ -134,6 +145,7 @@ function resetQuery() {
 }
 
 function handleView(row) {
+  currentProcessInstanceId.value = row.id;
   bpmnXml.value = "";
   activeActivityIds.value = [];
   activeTaskInfo.value = [];
@@ -147,10 +159,31 @@ function handleView(row) {
 }
 
 function handleRemind(row) {
-  proxy.$modal.confirm('确认向当前审批人发送提醒吗？').then(() => {
-    return remindProcessInstance(row.id);
+  proxy.$prompt('请输入催办原因', '催办提醒', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+  }).then(({ value }) => {
+    return remindProcessInstance(row.id, { reason: value });
   }).then(() => {
     proxy.$modal.msgSuccess("提醒发送成功");
+  }).catch(() => {});
+}
+
+function handleCancel(row) {
+  // BusinessKey usually is release ID for release process
+  // But wait, row.businessKey might be string.
+  // And we need to call cancelRelease(id) which expects release ID.
+  // Assuming businessKey IS the release ID.
+  if (!row.businessKey) {
+    proxy.$modal.msgError("无法撤销：业务ID不存在");
+    return;
+  }
+  
+  proxy.$modal.confirm('确认要撤销该申请吗？撤销后流程将终止，申请状态将变更为草稿。').then(() => {
+    return cancelRelease(row.businessKey);
+  }).then(() => {
+    proxy.$modal.msgSuccess("撤销成功");
+    getList();
   }).catch(() => {});
 }
 
@@ -171,3 +204,12 @@ onMounted(() => {
   getList();
 });
 </script>
+
+<style scoped>
+.danger-text {
+  color: #f56c6c;
+}
+.danger-text:hover {
+  color: #f78989;
+}
+</style>

@@ -180,4 +180,15 @@ public class OpsReleaseApplyController extends BaseController
     {
         return toAjax(opsReleaseApplyService.deleteOpsReleaseApplyByIds(ids));
     }
+    
+    /**
+     * Cancel Release Apply (Withdraw)
+     */
+    @PreAuthorize("@ss.hasPermi('ops:release:add')")
+    @Log(title = "Cancel Release Apply", businessType = BusinessType.UPDATE)
+    @PostMapping("/cancel/{id}")
+    public AjaxResult cancel(@PathVariable Long id) {
+        opsReleaseApplyService.cancelReleaseApply(id);
+        return AjaxResult.success();
+    }
 }

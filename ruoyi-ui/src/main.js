@@ -44,6 +44,9 @@ import ImagePreview from "@/components/ImagePreview"
 // 字典标签组件
 import DictTag from '@/components/DictTag'
 
+// Monaco Editor
+import { install as VueMonacoEditorPlugin } from '@guolao/vue-monaco-editor'
+
 const app = createApp(App)
 
 // 全局方法挂载
@@ -79,6 +82,11 @@ app.use(ElementPlus, {
   locale: locale,
   // 支持 large、default、small
   size: Cookies.get('size') || 'default'
+})
+
+// 注册 Monaco Editor
+app.use(VueMonacoEditorPlugin, {
+  // 移除 paths 配置，默认使用 loader 加载
 })
 
 app.mount('#app')

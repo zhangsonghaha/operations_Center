@@ -43,6 +43,7 @@ public interface OpsReleaseApplyMapper
      * @return Release Apply List
      */
     public List<OpsReleaseApply> selectReleasePendingList(@org.apache.ibatis.annotations.Param("userId") Long userId, 
+                                                          @org.apache.ibatis.annotations.Param("userName") String userName,
                                                           @org.apache.ibatis.annotations.Param("roleIds") List<Long> roleIds,
                                                           @org.apache.ibatis.annotations.Param("apply") OpsReleaseApply apply);
 

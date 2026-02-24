@@ -1,76 +1,62 @@
-# 部署模板文档系统规格说明书
+# 流程追踪系统增强与站内信系统开发规格说明书
 
-## 1. 概述
-本功能为部署模板模块（`deployTemplate`）增加文档管理系统。允许用户上传、管理和查看与部署模板关联的文档（PDF、Word、Markdown）。
+## 1. 数据库设计
 
-## 2. 需求
+### 1.1 站内信表 `sys_message`
+| 字段名 | 类型 | 长度 | 说明 |
+| :--- | :--- | :--- | :--- |
+| message_id | bigint | 20 | 主键ID |
+| sender_id | bigint | 20 | 发送者ID |
+| receiver_id | bigint | 20 | 接收者ID |
+| title | varchar | 255 | 标题 |
+| content | longtext | - | 内容（支持富文本） |
+| message_type | char | 1 | 消息类型（1=通知, 2=待办, 3=催办, 4=完结） |
+| read_status | char | 1 | 阅读状态（0=未读, 1=已读） |
+| delete_status | char | 1 | 删除状态（0=正常, 1=回收站, 2=彻底删除） |
+| create_time | datetime | - | 创建时间 |
+| read_time | datetime | - | 阅读时间 |
+| attachment | varchar | 500 | 附件路径（JSON格式或逗号分隔） |
+| business_id | varchar | 64 | 关联业务ID（如流程实例ID） |
 
-### 2.1 功能需求
-- **文档上传**：支持上传 PDF、Word (.docx) 和 Markdown (.md) 文件。
-- **文档关联**：将文档链接到特定的部署模板 (`OpsDeployTemplate`)。
-- **版本控制**：文档版本与模板版本同步。当模板更新（创建新版本）时，文档引用将自动带入新版本。
-- **预览**：支持 PDF、Word 和 Markdown 文件的在线预览。
-- **下载**：允许下载文档。
-- **访问控制**：继承部署模板模块的权限。
-- **日志记录**：记录文档的访问（查看/下载）行为。
+## 2. 后端接口设计
 
-### 2.2 用户界面
-- **模板管理**：在模板列表或详情视图中添加“文档管理”按钮。
-- **文档管理器**：弹窗或侧边栏，用于列出文档、上传新文档和执行操作（预览、下载、删除）。
-- **预览器**：用于预览文件内容的专用视图或模态框。
+### 2.1 站内信控制器 `SysMessageController`
+- `GET /system/message/list`: 获取消息列表（分页，支持按箱类型：inbox/sent/draft/trash 过滤）
+- `GET /system/message/unreadCount`: 获取未读消息数量
+- `GET /system/message/{messageId}`: 获取消息详情
+- `POST /system/message`: 发送消息（支持草稿）
+- `PUT /system/message`: 修改消息（主要用于标记已读、恢复删除）
+- `DELETE /system/message/{messageIds}`: 删除消息（逻辑删除/物理删除）
 
-## 3. 技术设计
+### 2.2 流程增强接口 `OpsWorkflowController` (现有或新增)
+- `POST /system/ops/workflow/urge`: 发起催办
+    - 参数: `processInstanceId`, `reason`
+    - 逻辑: 查询当前任务办理人 -> 生成"催办"类型的站内信 -> 发送
+- `GET /system/ops/workflow/node-detail/{procInstId}/{activityId}`: 获取节点详细信息
+    - 返回: 审批人、审批时间、意见、耗时、日志
 
-### 3.1 数据库架构
+## 3. 前端功能设计
 
-**表名：`ops_deploy_doc`**
+### 3.1 流程追踪组件升级 (`BpmnViewer`)
+- **交互**:
+    - 监听节点点击事件，打开 `NodeDetailDialog`。
+    - 增加缩放工具栏（放大、缩小、还原、适应屏幕）。
+    - 增加导出按钮（导出为 SVG/PNG/PDF）。
+- **展示**:
+    - 顶部显示流程总进度条（根据已完成节点/总节点估算）。
+    - 节点详情弹窗：Tab页展示（基本信息、操作日志、耗时分析）。
 
-| 列名          | 类型          | 描述                                      |
-|---------------|---------------|-------------------------------------------|
-| `doc_id`      | BIGINT (PK)   | 主键                                      |
-| `template_id` | BIGINT        | 外键，关联 `ops_deploy_template.id`       |
-| `version`     | VARCHAR(20)   | 模板版本 (例如 'v1.0.0')                  |
-| `doc_name`    | VARCHAR(255)  | 原始文件名                                |
-| `doc_path`    | VARCHAR(500)  | 文件存储路径 (相对于上传目录)             |
-| `doc_type`    | VARCHAR(20)   | 文件扩展名 (pdf, docx, md)                |
-| `file_size`   | BIGINT        | 文件大小（字节）                          |
-| `create_by`   | VARCHAR(64)   | 创建者                                    |
-| `create_time` | DATETIME      | 创建时间                                  |
-| `update_by`   | VARCHAR(64)   | 更新者                                    |
-| `update_time` | DATETIME      | 更新时间                                  |
-| `remark`      | VARCHAR(500)  | 备注                                      |
+### 3.2 站内信模块 (`views/system/message`)
+- **布局**: 左侧菜单（收件箱、已发送...），右侧列表/详情。
+- **列表**: 表格展示，支持按类型筛选，支持批量操作。
+- **编辑器**: 集成富文本编辑器（Quill 或 RuoYi 自带 Editor），支持文件上传。
 
-### 3.2 后端实现 (Java)
+### 3.3 全局通知
+- **Navbar**: 右上角增加铃铛图标，显示未读红点/数字。
+- **通知机制**: 轮询（每30秒）检查未读数。
+- **浏览器通知**: 使用 `Notification` API。
 
-- **实体类**: `com.ruoyi.web.domain.OpsDeployDoc`
-- **Mapper**: `com.ruoyi.web.mapper.OpsDeployDocMapper`
-- **Service**: `com.ruoyi.web.service.IOpsDeployDocService` & `OpsDeployDocServiceImpl`
-- **Controller**: `com.ruoyi.web.controller.system.OpsDeployDocController`
-  - `GET /list`: 列出某模板版本的文档。
-  - `POST /upload`: 上传文档。
-  - `DELETE /{docIds}`: 删除文档。
-  - `GET /download/{docId}`: 下载文档。
+## 4. 待办任务集成
+- 在站内信详情页，如果 `message_type` 为待办或催办，且 `business_id` 存在，显示"前往处理"按钮。
+- 点击跳转到审批页面，自动加载对应的任务。
 
-- **集成**:
-  - 修改 `OpsDeployTemplateServiceImpl.updateOpsDeployTemplate`：创建新版本时，将现有文档记录复制到新版本（链接到相同的文件路径）。
-
-### 3.3 前端实现 (Vue)
-
-- **组件**:
-  - `src/views/ops/deployTemplate/components/DocManager.vue`: 文档管理弹窗。
-  - `src/views/ops/deployTemplate/components/DocPreview.vue`: 文件预览组件。
-
-- **类库**:
-  - Word 预览: `mammoth.js` 或 `docx-preview`。
-  - PDF 预览: `pdfjs-dist` 或 `vue-pdf-embed`。
-  - Markdown 预览: `marked` (现有)。
-
-## 4. 安全与性能
-- **权限**: 使用 `@PreAuthorize` 限制访问。
-- **文件校验**: 上传时校验文件类型和大小。
-- **懒加载**: 仅在需要时加载预览库。
-
-## 5. 测试计划
-- **单元测试**: 测试 CRUD 和版本同步的 Service 逻辑。
-- **集成测试**: 验证上传、数据库持久化和文件检索。
-- **UI 测试**: 验证所有支持格式的预览渲染。

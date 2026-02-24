@@ -43,10 +43,19 @@ export function getProcessProgress(processInstanceId) {
 }
 
 // 提醒审批人
-export function remindProcessInstance(processInstanceId) {
+export function remindProcessInstance(processInstanceId, data) {
   return request({
     url: '/ops/workflow/instance/' + processInstanceId + '/remind',
-    method: 'post'
+    method: 'post',
+    data: data
+  })
+}
+
+// 获取节点详情
+export function getNodeDetail(processInstanceId, activityId) {
+  return request({
+    url: '/ops/workflow/node-detail/' + processInstanceId + '/' + activityId,
+    method: 'get'
   })
 }
 

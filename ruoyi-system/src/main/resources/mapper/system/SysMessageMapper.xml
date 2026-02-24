@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.SysMessageMapper">
+    
+    <resultMap type="SysMessage" id="SysMessageResult">
+        <result property="messageId"    column="message_id"    />
+        <result property="senderId"     column="sender_id"     />
+        <result property="receiverId"   column="receiver_id"   />
+        <result property="title"        column="title"         />
+        <result property="content"      column="content"       />
+        <result property="messageType"  column="message_type"  />
+        <result property="readStatus"   column="read_status"   />
+        <result property="deleteStatus" column="delete_status" />
+        <result property="attachment"   column="attachment"    />
+        <result property="businessId"   column="business_id"   />
+        <result property="createBy"     column="create_by"     />
+        <result property="createTime"   column="create_time"   />
+        <result property="updateBy"     column="update_by"     />
+        <result property="updateTime"   column="update_time"   />
+        <result property="remark"       column="remark"        />
+        <result property="readTime"     column="read_time"     />
+    </resultMap>
+
+    <sql id="selectSysMessageVo">
+        select message_id, sender_id, receiver_id, title, content, message_type, read_status, delete_status, attachment, business_id, create_by, create_time, update_by, update_time, remark, read_time from sys_message
+    </sql>
+
+    <select id="selectSysMessageList" parameterType="SysMessage" resultMap="SysMessageResult">
+        <include refid="selectSysMessageVo"/>
+        <where>  
+            <if test="senderId != null "> and sender_id = #{senderId}</if>
+            <if test="receiverId != null "> and receiver_id = #{receiverId}</if>
+            <if test="title != null  and title != ''"> and title like concat('%', #{title}, '%')</if>
+            <if test="messageType != null  and messageType != ''"> and message_type = #{messageType}</if>
+            <if test="readStatus != null  and readStatus != ''"> and read_status = #{readStatus}</if>
+            <if test="deleteStatus != null  and deleteStatus != ''"> and delete_status = #{deleteStatus}</if>
+        </where>
+        order by create_time desc
+    </select>
+    
+    <select id="selectSysMessageById" parameterType="Long" resultMap="SysMessageResult">
+        <include refid="selectSysMessageVo"/>
+        where message_id = #{messageId}
+    </select>
+    
+    <select id="selectUnreadCount" parameterType="Long" resultType="int">
+        select count(1) from sys_message 
+        where receiver_id = #{userId} and read_status = '0' and delete_status = '0'
+    </select>
+
+    <insert id="insertSysMessage" parameterType="SysMessage" useGeneratedKeys="true" keyProperty="messageId">
+        insert into sys_message
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="senderId != null">sender_id,</if>
+            <if test="receiverId != null">receiver_id,</if>
+            <if test="title != null">title,</if>
+            <if test="content != null">content,</if>
+            <if test="messageType != null">message_type,</if>
+            <if test="readStatus != null">read_status,</if>
+            <if test="deleteStatus != null">delete_status,</if>
+            <if test="attachment != null">attachment,</if>
+            <if test="businessId != null">business_id,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+            <if test="readTime != null">read_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="senderId != null">#{senderId},</if>
+            <if test="receiverId != null">#{receiverId},</if>
+            <if test="title != null">#{title},</if>
+            <if test="content != null">#{content},</if>
+            <if test="messageType != null">#{messageType},</if>
+            <if test="readStatus != null">#{readStatus},</if>
+            <if test="deleteStatus != null">#{deleteStatus},</if>
+            <if test="attachment != null">#{attachment},</if>
+            <if test="businessId != null">#{businessId},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+            <if test="readTime != null">#{readTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateSysMessage" parameterType="SysMessage">
+        update sys_message
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="senderId != null">sender_id = #{senderId},</if>
+            <if test="receiverId != null">receiver_id = #{receiverId},</if>
+            <if test="title != null">title = #{title},</if>
+            <if test="content != null">content = #{content},</if>
+            <if test="messageType != null">message_type = #{messageType},</if>
+            <if test="readStatus != null">read_status = #{readStatus},</if>
+            <if test="deleteStatus != null">delete_status = #{deleteStatus},</if>
+            <if test="attachment != null">attachment = #{attachment},</if>
+            <if test="businessId != null">business_id = #{businessId},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="readTime != null">read_time = #{readTime},</if>
+        </trim>
+        where message_id = #{messageId}
+    </update>
+
+    <delete id="deleteSysMessageById" parameterType="Long">
+        delete from sys_message where message_id = #{messageId}
+    </delete>
+
+    <delete id="deleteSysMessageByIds" parameterType="String">
+        delete from sys_message where message_id in 
+        <foreach item="messageId" collection="array" open="(" separator="," close=")">
+            #{messageId}
+        </foreach>
+    </delete>
+    
+</mapper>
