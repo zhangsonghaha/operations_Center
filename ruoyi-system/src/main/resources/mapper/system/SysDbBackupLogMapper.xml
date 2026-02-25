@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.SysDbBackupLogMapper">
+    
+    <resultMap type="SysDbBackupLog" id="SysDbBackupLogResult">
+        <result property="logId"    column="log_id"    />
+        <result property="backupId"    column="backup_id"    />
+        <result property="strategyId"    column="strategy_id"    />
+        <result property="connId"    column="conn_id"    />
+        <result property="dbType"    column="db_type"    />
+        <result property="operationType"    column="operation_type"    />
+        <result property="operationStatus"    column="operation_status"    />
+        <result property="startTime"    column="start_time"    />
+        <result property="endTime"    column="end_time"    />
+        <result property="duration"    column="duration"    />
+        <result property="fileSize"    column="file_size"    />
+        <result property="message"    column="message"    />
+        <result property="errorMsg"    column="error_msg"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+    </resultMap>
+
+    <sql id="selectSysDbBackupLogVo">
+        select log_id, backup_id, strategy_id, conn_id, db_type, operation_type, operation_status, 
+               start_time, end_time, duration, file_size, message, error_msg, create_by, create_time 
+        from sys_db_backup_log
+    </sql>
+
+    <select id="selectSysDbBackupLogList" parameterType="SysDbBackupLog" resultMap="SysDbBackupLogResult">
+        <include refid="selectSysDbBackupLogVo"/>
+        <where>  
+            <if test="backupId != null "> and backup_id = #{backupId}</if>
+            <if test="strategyId != null "> and strategy_id = #{strategyId}</if>
+            <if test="connId != null "> and conn_id = #{connId}</if>
+            <if test="dbType != null  and dbType != ''"> and db_type = #{dbType}</if>
+            <if test="operationType != null  and operationType != ''"> and operation_type = #{operationType}</if>
+            <if test="operationStatus != null  and operationStatus != ''"> and operation_status = #{operationStatus}</if>
+        </where>
+        order by create_time desc
+    </select>
+    
+    <select id="selectSysDbBackupLogByLogId" parameterType="Long" resultMap="SysDbBackupLogResult">
+        <include refid="selectSysDbBackupLogVo"/>
+        where log_id = #{logId}
+    </select>
+        
+    <insert id="insertSysDbBackupLog" parameterType="SysDbBackupLog" useGeneratedKeys="true" keyProperty="logId">
+        insert into sys_db_backup_log
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="backupId != null">backup_id,</if>
+            <if test="strategyId != null">strategy_id,</if>
+            <if test="connId != null">conn_id,</if>
+            <if test="dbType != null">db_type,</if>
+            <if test="operationType != null">operation_type,</if>
+            <if test="operationStatus != null">operation_status,</if>
+            <if test="startTime != null">start_time,</if>
+            <if test="endTime != null">end_time,</if>
+            <if test="duration != null">duration,</if>
+            <if test="fileSize != null">file_size,</if>
+            <if test="message != null">message,</if>
+            <if test="errorMsg != null">error_msg,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="backupId != null">#{backupId},</if>
+            <if test="strategyId != null">#{strategyId},</if>
+            <if test="connId != null">#{connId},</if>
+            <if test="dbType != null">#{dbType},</if>
+            <if test="operationType != null">#{operationType},</if>
+            <if test="operationStatus != null">#{operationStatus},</if>
+            <if test="startTime != null">#{startTime},</if>
+            <if test="endTime != null">#{endTime},</if>
+            <if test="duration != null">#{duration},</if>
+            <if test="fileSize != null">#{fileSize},</if>
+            <if test="message != null">#{message},</if>
+            <if test="errorMsg != null">#{errorMsg},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateSysDbBackupLog" parameterType="SysDbBackupLog">
+        update sys_db_backup_log
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="backupId != null">backup_id = #{backupId},</if>
+            <if test="strategyId != null">strategy_id = #{strategyId},</if>
+            <if test="connId != null">conn_id = #{connId},</if>
+            <if test="dbType != null">db_type = #{dbType},</if>
+            <if test="operationType != null">operation_type = #{operationType},</if>
+            <if test="operationStatus != null">operation_status = #{operationStatus},</if>
+            <if test="startTime != null">start_time = #{startTime},</if>
+            <if test="endTime != null">end_time = #{endTime},</if>
+            <if test="duration != null">duration = #{duration},</if>
+            <if test="fileSize != null">file_size = #{fileSize},</if>
+            <if test="message != null">message = #{message},</if>
+            <if test="errorMsg != null">error_msg = #{errorMsg},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+        </trim>
+        where log_id = #{logId}
+    </update>
+
+    <delete id="deleteSysDbBackupLogByLogId" parameterType="Long">
+        delete from sys_db_backup_log where log_id = #{logId}
+    </delete>
+
+    <delete id="deleteSysDbBackupLogByLogIds" parameterType="String">
+        delete from sys_db_backup_log where log_id in 
+        <foreach item="logId" collection="array" open="(" separator="," close=")">
+            #{logId}
+        </foreach>
+    </delete>
+</mapper>

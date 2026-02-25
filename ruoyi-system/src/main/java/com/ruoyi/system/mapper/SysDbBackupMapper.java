@@ -57,4 +57,19 @@ public interface SysDbBackupMapper
      * @return 结果
      */
     public int deleteSysDbBackupByBackupIds(Long[] backupIds);
+
+    /**
+     * 查询过期备份记录
+     * 
+     * @return 备份记录集合
+     */
+    public List<SysDbBackup> selectExpiredBackups();
+
+    /**
+     * 逻辑删除备份记录
+     * 
+     * @param backupId 备份ID
+     * @return 结果
+     */
+    public int logicDeleteSysDbBackup(Long backupId);
 }

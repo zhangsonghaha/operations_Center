@@ -65,6 +65,15 @@ export function getTables(connId) {
   })
 }
 
+// 获取表列表（别名，用于备份页面）
+export function getTableList(connId) {
+  return request({
+    url: '/system/db/execute/tables',
+    method: 'get',
+    params: { connId }
+  })
+}
+
 // 获取数据库元数据
 export function getMetadata(connId) {
   return request({
@@ -265,6 +274,48 @@ export function backup(connId) {
   })
 }
 
+// 执行高级备份
+export function backupWithOptions(connId, dbType, backupMode, backupLevel, targetName, storageType, compressEnabled) {
+  return request({
+    url: '/system/db/backup/backup-advanced',
+    method: 'post',
+    data: { connId, dbType, backupMode, backupLevel, targetName, storageType, compressEnabled }
+  })
+}
+
+// 验证备份
+export function verifyBackup(backupId) {
+  return request({
+    url: '/system/db/backup/verify/' + backupId,
+    method: 'post'
+  })
+}
+
+// 恢复备份
+export function restoreBackup(data) {
+  return request({
+    url: '/system/db/backup/restore-async',
+    method: 'post',
+    data: data
+  })
+}
+
+// 获取恢复进度
+export function getRestoreProgress(taskId) {
+  return request({
+    url: '/system/db/backup/restore/progress/' + taskId,
+    method: 'get'
+  })
+}
+
+// 清理过期备份
+export function cleanExpiredBackups() {
+  return request({
+    url: '/system/db/backup/clean-expired',
+    method: 'post'
+  })
+}
+
 // 删除备份
 export function delBackup(backupId) {
   return request({
@@ -281,5 +332,58 @@ export function listLog(query) {
     url: '/system/db/log/list',
     method: 'get',
     params: query
+  })
+}
+
+// --- 备份策略 ---
+
+// 查询备份策略列表
+export function listStrategy(query) {
+  return request({
+    url: '/system/db/backupStrategy/list',
+    method: 'get',
+    params: query
+  })
+}
+
+// 查询备份策略详细
+export function getStrategy(strategyId) {
+  return request({
+    url: '/system/db/backupStrategy/' + strategyId,
+    method: 'get'
+  })
+}
+
+// 新增备份策略
+export function addStrategy(data) {
+  return request({
+    url: '/system/db/backupStrategy',
+    method: 'post',
+    data: data
+  })
+}
+
+// 修改备份策略
+export function updateStrategy(data) {
+  return request({
+    url: '/system/db/backupStrategy',
+    method: 'put',
+    data: data
+  })
+}
+
+// 删除备份策略
+export function delStrategy(strategyId) {
+  return request({
+    url: '/system/db/backupStrategy/' + strategyId,
+    method: 'delete'
+  })
+}
+
+// 立即执行策略备份
+export function executeStrategy(strategyId) {
+  return request({
+    url: '/system/db/backupStrategy/execute/' + strategyId,
+    method: 'post'
   })
 }

@@ -12,27 +12,52 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="backupType"    column="backup_type"    />
         <result property="status"    column="status"    />
         <result property="logMsg"    column="log_msg"    />
+        <result property="dbType"    column="db_type"    />
+        <result property="backupMode"    column="backup_mode"    />
+        <result property="backupLevel"    column="backup_level"    />
+        <result property="targetName"    column="target_name"    />
+        <result property="fileSize"    column="file_size"    />
+        <result property="fileMd5"    column="file_md5"    />
+        <result property="storageType"    column="storage_type"    />
+        <result property="storageConfig"    column="storage_config"    />
+        <result property="verifyStatus"    column="verify_status"    />
+        <result property="verifyMsg"    column="verify_msg"    />
+        <result property="expireTime"    column="expire_time"    />
+        <result property="isDeleted"    column="is_deleted"    />
         <result property="createBy"    column="create_by"    />
         <result property="createTime"    column="create_time"    />
     </resultMap>
 
     <sql id="selectSysDbBackupVo">
-        select backup_id, conn_id, file_name, file_path, backup_type, status, log_msg, create_by, create_time from sys_db_backup
+        select backup_id, conn_id, file_name, file_path, backup_type, status, log_msg, 
+               db_type, backup_mode, backup_level, target_name, file_size, file_md5, 
+               storage_type, verify_status, expire_time, is_deleted, create_by, create_time 
+        from sys_db_backup
     </sql>
 
     <select id="selectSysDbBackupList" parameterType="SysDbBackup" resultMap="SysDbBackupResult">
         <include refid="selectSysDbBackupVo"/>
         <where>  
+            and is_deleted = '0'
             <if test="connId != null "> and conn_id = #{connId}</if>
             <if test="fileName != null  and fileName != ''"> and file_name like concat('%', #{fileName}, '%')</if>
             <if test="backupType != null  and backupType != ''"> and backup_type = #{backupType}</if>
             <if test="status != null  and status != ''"> and status = #{status}</if>
+            <if test="dbType != null  and dbType != ''"> and db_type = #{dbType}</if>
+            <if test="backupMode != null  and backupMode != ''"> and backup_mode = #{backupMode}</if>
+            <if test="verifyStatus != null  and verifyStatus != ''"> and verify_status = #{verifyStatus}</if>
         </where>
+        order by create_time desc
     </select>
     
     <select id="selectSysDbBackupByBackupId" parameterType="Long" resultMap="SysDbBackupResult">
         <include refid="selectSysDbBackupVo"/>
         where backup_id = #{backupId}
+    </select>
+
+    <select id="selectExpiredBackups" resultMap="SysDbBackupResult">
+        <include refid="selectSysDbBackupVo"/>
+        where is_deleted = '0' and expire_time &lt; NOW()
     </select>
         
     <insert id="insertSysDbBackup" parameterType="SysDbBackup" useGeneratedKeys="true" keyProperty="backupId">
@@ -44,6 +69,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="backupType != null">backup_type,</if>
             <if test="status != null">status,</if>
             <if test="logMsg != null">log_msg,</if>
+            <if test="dbType != null">db_type,</if>
+            <if test="backupMode != null">backup_mode,</if>
+            <if test="backupLevel != null">backup_level,</if>
+            <if test="targetName != null">target_name,</if>
+            <if test="fileSize != null">file_size,</if>
+            <if test="fileMd5 != null">file_md5,</if>
+            <if test="storageType != null">storage_type,</if>
+            <if test="storageConfig != null">storage_config,</if>
+            <if test="verifyStatus != null">verify_status,</if>
+            <if test="expireTime != null">expire_time,</if>
             <if test="createBy != null">create_by,</if>
             <if test="createTime != null">create_time,</if>
          </trim>
@@ -54,6 +89,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="backupType != null">#{backupType},</if>
             <if test="status != null">#{status},</if>
             <if test="logMsg != null">#{logMsg},</if>
+            <if test="dbType != null">#{dbType},</if>
+            <if test="backupMode != null">#{backupMode},</if>
+            <if test="backupLevel != null">#{backupLevel},</if>
+            <if test="targetName != null">#{targetName},</if>
+            <if test="fileSize != null">#{fileSize},</if>
+            <if test="fileMd5 != null">#{fileMd5},</if>
+            <if test="storageType != null">#{storageType},</if>
+            <if test="storageConfig != null">#{storageConfig},</if>
+            <if test="verifyStatus != null">#{verifyStatus},</if>
+            <if test="expireTime != null">#{expireTime},</if>
             <if test="createBy != null">#{createBy},</if>
             <if test="createTime != null">#{createTime},</if>
          </trim>
@@ -68,10 +113,25 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="backupType != null">backup_type = #{backupType},</if>
             <if test="status != null">status = #{status},</if>
             <if test="logMsg != null">log_msg = #{logMsg},</if>
+            <if test="dbType != null">db_type = #{dbType},</if>
+            <if test="backupMode != null">backup_mode = #{backupMode},</if>
+            <if test="backupLevel != null">backup_level = #{backupLevel},</if>
+            <if test="targetName != null">target_name = #{targetName},</if>
+            <if test="fileSize != null">file_size = #{fileSize},</if>
+            <if test="fileMd5 != null">file_md5 = #{fileMd5},</if>
+            <if test="storageType != null">storage_type = #{storageType},</if>
+            <if test="storageConfig != null">storage_config = #{storageConfig},</if>
+            <if test="verifyStatus != null">verify_status = #{verifyStatus},</if>
+            <if test="verifyMsg != null">verify_msg = #{verifyMsg},</if>
+            <if test="expireTime != null">expire_time = #{expireTime},</if>
             <if test="createBy != null">create_by = #{createBy},</if>
             <if test="createTime != null">create_time = #{createTime},</if>
         </trim>
         where backup_id = #{backupId}
+    </update>
+
+    <update id="logicDeleteSysDbBackup" parameterType="Long">
+        update sys_db_backup set is_deleted = '1' where backup_id = #{backupId}
     </update>
 
     <delete id="deleteSysDbBackupByBackupId" parameterType="Long">

@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.SysDbBackupStrategyMapper">
+    
+    <resultMap type="SysDbBackupStrategy" id="SysDbBackupStrategyResult">
+        <result property="strategyId"    column="strategy_id"    />
+        <result property="strategyName"    column="strategy_name"    />
+        <result property="connId"    column="conn_id"    />
+        <result property="dbType"    column="db_type"    />
+        <result property="backupMode"    column="backup_mode"    />
+        <result property="backupLevel"    column="backup_level"    />
+        <result property="targetName"    column="target_name"    />
+        <result property="cronExpression"    column="cron_expression"    />
+        <result property="enabled"    column="enabled"    />
+        <result property="retentionDays"    column="retention_days"    />
+        <result property="retentionCount"    column="retention_count"    />
+        <result property="compressEnabled"    column="compress_enabled"    />
+        <result property="compressType"    column="compress_type"    />
+        <result property="encryptEnabled"    column="encrypt_enabled"    />
+        <result property="storageType"    column="storage_type"    />
+        <result property="storageConfig"    column="storage_config"    />
+        <result property="alertEnabled"    column="alert_enabled"    />
+        <result property="alertConfig"    column="alert_config"    />
+        <result property="remark"    column="remark"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <sql id="selectSysDbBackupStrategyVo">
+        select strategy_id, strategy_name, conn_id, db_type, backup_mode, backup_level, target_name, 
+               cron_expression, enabled, retention_days, retention_count, compress_enabled, compress_type, 
+               encrypt_enabled, storage_type, alert_enabled, remark, create_by, create_time, update_by, update_time 
+        from sys_db_backup_strategy
+    </sql>
+
+    <select id="selectSysDbBackupStrategyList" parameterType="SysDbBackupStrategy" resultMap="SysDbBackupStrategyResult">
+        <include refid="selectSysDbBackupStrategyVo"/>
+        <where>  
+            <if test="strategyName != null  and strategyName != ''"> and strategy_name like concat('%', #{strategyName}, '%')</if>
+            <if test="connId != null "> and conn_id = #{connId}</if>
+            <if test="dbType != null  and dbType != ''"> and db_type = #{dbType}</if>
+            <if test="backupMode != null  and backupMode != ''"> and backup_mode = #{backupMode}</if>
+            <if test="enabled != null  and enabled != ''"> and enabled = #{enabled}</if>
+        </where>
+        order by create_time desc
+    </select>
+    
+    <select id="selectSysDbBackupStrategyByStrategyId" parameterType="Long" resultMap="SysDbBackupStrategyResult">
+        <include refid="selectSysDbBackupStrategyVo"/>
+        where strategy_id = #{strategyId}
+    </select>
+
+    <select id="selectEnabledStrategyList" resultMap="SysDbBackupStrategyResult">
+        <include refid="selectSysDbBackupStrategyVo"/>
+        where enabled = '0'
+    </select>
+        
+    <insert id="insertSysDbBackupStrategy" parameterType="SysDbBackupStrategy" useGeneratedKeys="true" keyProperty="strategyId">
+        insert into sys_db_backup_strategy
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="strategyName != null and strategyName != ''">strategy_name,</if>
+            <if test="connId != null">conn_id,</if>
+            <if test="dbType != null">db_type,</if>
+            <if test="backupMode != null">backup_mode,</if>
+            <if test="backupLevel != null">backup_level,</if>
+            <if test="targetName != null">target_name,</if>
+            <if test="cronExpression != null">cron_expression,</if>
+            <if test="enabled != null">enabled,</if>
+            <if test="retentionDays != null">retention_days,</if>
+            <if test="retentionCount != null">retention_count,</if>
+            <if test="compressEnabled != null">compress_enabled,</if>
+            <if test="compressType != null">compress_type,</if>
+            <if test="encryptEnabled != null">encrypt_enabled,</if>
+            <if test="storageType != null">storage_type,</if>
+            <if test="storageConfig != null">storage_config,</if>
+            <if test="alertEnabled != null">alert_enabled,</if>
+            <if test="alertConfig != null">alert_config,</if>
+            <if test="remark != null">remark,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="strategyName != null and strategyName != ''">#{strategyName},</if>
+            <if test="connId != null">#{connId},</if>
+            <if test="dbType != null">#{dbType},</if>
+            <if test="backupMode != null">#{backupMode},</if>
+            <if test="backupLevel != null">#{backupLevel},</if>
+            <if test="targetName != null">#{targetName},</if>
+            <if test="cronExpression != null">#{cronExpression},</if>
+            <if test="enabled != null">#{enabled},</if>
+            <if test="retentionDays != null">#{retentionDays},</if>
+            <if test="retentionCount != null">#{retentionCount},</if>
+            <if test="compressEnabled != null">#{compressEnabled},</if>
+            <if test="compressType != null">#{compressType},</if>
+            <if test="encryptEnabled != null">#{encryptEnabled},</if>
+            <if test="storageType != null">#{storageType},</if>
+            <if test="storageConfig != null">#{storageConfig},</if>
+            <if test="alertEnabled != null">#{alertEnabled},</if>
+            <if test="alertConfig != null">#{alertConfig},</if>
+            <if test="remark != null">#{remark},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateSysDbBackupStrategy" parameterType="SysDbBackupStrategy">
+        update sys_db_backup_strategy
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="strategyName != null and strategyName != ''">strategy_name = #{strategyName},</if>
+            <if test="connId != null">conn_id = #{connId},</if>
+            <if test="dbType != null">db_type = #{dbType},</if>
+            <if test="backupMode != null">backup_mode = #{backupMode},</if>
+            <if test="backupLevel != null">backup_level = #{backupLevel},</if>
+            <if test="targetName != null">target_name = #{targetName},</if>
+            <if test="cronExpression != null">cron_expression = #{cronExpression},</if>
+            <if test="enabled != null">enabled = #{enabled},</if>
+            <if test="retentionDays != null">retention_days = #{retentionDays},</if>
+            <if test="retentionCount != null">retention_count = #{retentionCount},</if>
+            <if test="compressEnabled != null">compress_enabled = #{compressEnabled},</if>
+            <if test="compressType != null">compress_type = #{compressType},</if>
+            <if test="encryptEnabled != null">encrypt_enabled = #{encryptEnabled},</if>
+            <if test="storageType != null">storage_type = #{storageType},</if>
+            <if test="storageConfig != null">storage_config = #{storageConfig},</if>
+            <if test="alertEnabled != null">alert_enabled = #{alertEnabled},</if>
+            <if test="alertConfig != null">alert_config = #{alertConfig},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where strategy_id = #{strategyId}
+    </update>
+
+    <delete id="deleteSysDbBackupStrategyByStrategyId" parameterType="Long">
+        delete from sys_db_backup_strategy where strategy_id = #{strategyId}
+    </delete>
+
+    <delete id="deleteSysDbBackupStrategyByStrategyIds" parameterType="String">
+        delete from sys_db_backup_strategy where strategy_id in 
+        <foreach item="strategyId" collection="array" open="(" separator="," close=")">
+            #{strategyId}
+        </foreach>
+    </delete>
+</mapper>

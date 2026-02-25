@@ -129,7 +129,13 @@
             </div>
             <el-table v-loading="loading" :data="slowQueries" border stripe size="small">
               <el-table-column type="index" label="#" width="50" />
-              <el-table-column prop="query" label="SQL语句" min-width="300" show-overflow-tooltip />
+              <el-table-column prop="query" label="SQL语句" min-width="300">
+                <template #default="scope">
+                  <el-link type="primary" :underline="false" @click="showSqlDetail(scope.row.query)">
+                    <span class="sql-preview">{{ scope.row.query }}</span>
+                  </el-link>
+                </template>
+              </el-table-column>
               <el-table-column prop="db" label="数据库" width="100" />
               <el-table-column prop="exec_count" label="执行次数" width="90" sortable />
               <el-table-column prop="total_latency" label="总耗时(s)" width="100" sortable />
@@ -147,30 +153,46 @@
           <div class="tab-content">
             <el-table v-loading="loading" :data="tableStats" border stripe size="small" :default-sort="{prop: 'data_length', order: 'descending'}">
               <el-table-column type="index" label="#" width="50" />
-              <el-table-column prop="table_name" label="表名" sortable min-width="150" />
-              <el-table-column prop="table_comment" label="注释" min-width="150" show-overflow-tooltip />
-              <el-table-column prop="engine" label="引擎" width="90" />
-              <el-table-column prop="table_rows" label="行数" width="100" sortable>
+              <el-table-column label="表名" sortable min-width="150">
                 <template #default="scope">
-                  {{ formatNumber(scope.row.table_rows) }}
+                  {{ getFieldValue(scope.row, ['table_name', 'TABLE_NAME', 'tableName']) }}
                 </template>
               </el-table-column>
-              <el-table-column prop="data_length" label="数据大小" width="110" sortable>
+              <el-table-column label="注释" min-width="150" show-overflow-tooltip>
                 <template #default="scope">
-                  {{ formatBytes(scope.row.data_length) }}
+                  {{ getFieldValue(scope.row, ['table_comment', 'TABLE_COMMENT', 'tableComment']) }}
                 </template>
               </el-table-column>
-              <el-table-column prop="index_length" label="索引大小" width="110" sortable>
+              <el-table-column label="引擎" width="90">
                 <template #default="scope">
-                  {{ formatBytes(scope.row.index_length) }}
+                  {{ getFieldValue(scope.row, ['engine', 'ENGINE']) }}
                 </template>
               </el-table-column>
-              <el-table-column prop="total_length" label="总大小" width="110" sortable>
+              <el-table-column label="行数" width="100" sortable>
                 <template #default="scope">
-                  <span class="size-highlight">{{ formatBytes(scope.row.total_length) }}</span>
+                  {{ formatNumber(getFieldValue(scope.row, ['table_rows', 'TABLE_ROWS', 'tableRows'])) }}
                 </template>
               </el-table-column>
-              <el-table-column prop="create_time" label="创建时间" width="150" />
+              <el-table-column label="数据大小" width="110" sortable>
+                <template #default="scope">
+                  {{ formatBytes(getFieldValue(scope.row, ['data_length', 'DATA_LENGTH', 'dataLength'])) }}
+                </template>
+              </el-table-column>
+              <el-table-column label="索引大小" width="110" sortable>
+                <template #default="scope">
+                  {{ formatBytes(getFieldValue(scope.row, ['index_length', 'INDEX_LENGTH', 'indexLength'])) }}
+                </template>
+              </el-table-column>
+              <el-table-column label="总大小" width="110" sortable>
+                <template #default="scope">
+                  <span class="size-highlight">{{ formatBytes(getFieldValue(scope.row, ['total_length', 'TOTAL_LENGTH', 'totalLength'])) }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="创建时间" width="150">
+                <template #default="scope">
+                  {{ getFieldValue(scope.row, ['create_time', 'CREATE_TIME', 'createTime']) }}
+                </template>
+              </el-table-column>
             </el-table>
           </div>
         </el-tab-pane>
@@ -186,7 +208,13 @@
             </div>
             <el-table v-loading="loading" :data="sqlStats" border stripe size="small">
               <el-table-column type="index" label="#" width="50" />
-              <el-table-column prop="query" label="SQL语句" min-width="300" show-overflow-tooltip />
+              <el-table-column prop="query" label="SQL语句" min-width="300">
+                <template #default="scope">
+                  <el-link type="primary" :underline="false" @click="showSqlDetail(scope.row.query)">
+                    <span class="sql-preview">{{ scope.row.query }}</span>
+                  </el-link>
+                </template>
+              </el-table-column>
               <el-table-column prop="db" label="数据库" width="100" />
               <el-table-column prop="exec_count" label="执行次数" width="90" sortable />
               <el-table-column prop="errors" label="错误数" width="80" sortable>
@@ -247,14 +275,21 @@
     <el-dialog :title="ruleDialogTitle" v-model="ruleDialogVisible" width="600px" append-to-body>
       <el-form ref="ruleFormRef" :model="ruleForm" :rules="ruleRules" label-width="100px">
         <el-form-item label="规则类型" prop="ruleType">
-          <el-select v-model="ruleForm.ruleType" placeholder="请选择规则类型" style="width: 100%">
+          <el-select v-model="ruleForm.ruleType" placeholder="请选择规则类型" style="width: 100%" @change="handleRuleTypeChange">
             <el-option label="慢查询" value="slow_query" />
             <el-option label="连接数" value="connection" />
             <el-option label="表空间" value="table_space" />
           </el-select>
         </el-form-item>
         <el-form-item label="指标名称" prop="metricName">
-          <el-input v-model="ruleForm.metricName" placeholder="请输入指标名称" />
+          <el-select v-model="ruleForm.metricName" placeholder="请先选择规则类型，再选择指标" style="width: 100%" :disabled="!ruleForm.ruleType">
+            <el-option
+              v-for="item in metricOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item label="条件" prop="condition">
           <el-select v-model="ruleForm.condition" placeholder="请选择条件" style="width: 100%">
@@ -279,6 +314,17 @@
       <template #footer>
         <el-button @click="ruleDialogVisible = false">取 消</el-button>
         <el-button type="primary" @click="submitRuleForm">确 定</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- SQL详情对话框 -->
+    <el-dialog title="SQL详情" v-model="sqlDialogVisible" width="800px" append-to-body>
+      <div class="sql-detail-container">
+        <pre class="sql-code">{{ currentSql }}</pre>
+      </div>
+      <template #footer>
+        <el-button @click="sqlDialogVisible = false">关 闭</el-button>
+        <el-button type="primary" @click="copySql">复制SQL</el-button>
       </template>
     </el-dialog>
   </div>
@@ -348,10 +394,36 @@ const ruleForm = ref({
 })
 const ruleRules = {
   ruleType: [{ required: true, message: '请选择规则类型', trigger: 'change' }],
-  metricName: [{ required: true, message: '请输入指标名称', trigger: 'blur' }],
+  metricName: [{ required: true, message: '请选择指标名称', trigger: 'change' }],
   condition: [{ required: true, message: '请选择条件', trigger: 'change' }],
   threshold: [{ required: true, message: '请输入阈值', trigger: 'blur' }]
 }
+
+// SQL详情对话框
+const sqlDialogVisible = ref(false)
+const currentSql = ref('')
+
+// 指标名称字典（根据规则类型联动）
+const metricOptions = computed(() => {
+  const options = {
+    slow_query: [
+      { label: '查询执行时间(秒)', value: 'query_time' },
+      { label: '扫描行数', value: 'rows_examined' },
+      { label: '返回行数', value: 'rows_sent' }
+    ],
+    connection: [
+      { label: '当前连接数', value: 'current_connections' },
+      { label: '活跃连接数', value: 'active_connections' },
+      { label: '最大连接数', value: 'max_connections' }
+    ],
+    table_space: [
+      { label: '表数据大小(MB)', value: 'data_length_mb' },
+      { label: '表总大小(MB)', value: 'table_size_mb' },
+      { label: '表行数', value: 'table_rows' }
+    ]
+  }
+  return options[ruleForm.value.ruleType] || []
+})
 
 // 计算总表空间
 const totalTableSpace = computed(() => {
@@ -608,13 +680,17 @@ function updateTableSpaceChart() {
     },
     yAxis: {
       type: 'category',
-      data: top10.map(item => item.table_name).reverse()
+      data: top10.map(item => item.TABLE_NAME || item.table_name || item.tableName || '未知表').reverse()
     },
     series: [
       {
         name: '表空间',
         type: 'bar',
-        data: top10.map(item => item.total_length || 0).reverse(),
+        data: top10.map(item => {
+          const size = item.TOTAL_LENGTH || item.total_length || item.totalLength || 
+                       ((item.DATA_LENGTH || item.data_length || 0) + (item.INDEX_LENGTH || item.index_length || 0))
+          return size || 0
+        }).reverse(),
         itemStyle: {
           color: new echarts.graphic.LinearGradient(1, 0, 0, 0, [
             { offset: 0, color: '#8b5cf6' },
@@ -640,6 +716,17 @@ function formatBytes(bytes) {
 function formatNumber(num) {
   if (!num) return '0'
   return num.toLocaleString()
+}
+
+// 获取字段值（支持多种字段名格式）
+function getFieldValue(row, fieldNames) {
+  if (!row) return ''
+  for (const name of fieldNames) {
+    if (row[name] !== undefined && row[name] !== null) {
+      return row[name]
+    }
+  }
+  return ''
 }
 
 // 获取命令类型标签
@@ -694,6 +781,11 @@ function handleAddRule() {
   ruleDialogVisible.value = true
 }
 
+// 规则类型变化时重置指标名称
+function handleRuleTypeChange() {
+  ruleForm.value.metricName = ''
+}
+
 function handleEditRule(row) {
   ruleDialogTitle.value = '编辑规则'
   ruleForm.value = { ...row }
@@ -727,8 +819,28 @@ function submitRuleForm() {
         ElMessage.success(ruleForm.value.ruleId ? '修改成功' : '新增成功')
         ruleDialogVisible.value = false
         loadRules()
+        // 如果添加的是慢查询规则，自动刷新慢查询统计
+        if (ruleForm.value.ruleType === 'slow_query') {
+          loadSlowQueries()
+        }
       })
     }
+  })
+}
+
+// 显示SQL详情
+function showSqlDetail(sql) {
+  currentSql.value = sql || ''
+  sqlDialogVisible.value = true
+}
+
+// 复制SQL
+function copySql() {
+  if (!currentSql.value) return
+  navigator.clipboard.writeText(currentSql.value).then(() => {
+    ElMessage.success('SQL已复制到剪贴板')
+  }).catch(() => {
+    ElMessage.error('复制失败')
   })
 }
 
@@ -765,6 +877,8 @@ onUnmounted(() => {
 <style scoped>
 .db-monitor {
   padding: 20px;
+  background: #f8fafc;
+  min-height: 100vh;
 }
 
 .monitor-header {
@@ -773,9 +887,10 @@ onUnmounted(() => {
   align-items: center;
   margin-bottom: 20px;
   padding: 16px 20px;
-  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  background: #ffffff;
   border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
 }
 
 .conn-selector {
@@ -785,12 +900,13 @@ onUnmounted(() => {
 }
 
 .conn-selector .label {
-  color: #94a3b8;
+  color: #475569;
   font-size: 14px;
+  font-weight: 500;
 }
 
 .auto-refresh {
-  color: #94a3b8;
+  color: #475569;
 }
 
 /* 统计卡片 */
@@ -805,32 +921,33 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   padding: 20px;
-  background: rgba(255, 255, 255, 0.05);
+  background: #ffffff;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid transparent;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
 }
 
 .stat-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .stat-card.primary {
-  border-left: 4px solid #3b82f6;
+  border-left-color: #3b82f6;
 }
 
 .stat-card.success {
-  border-left: 4px solid #10b981;
+  border-left-color: #10b981;
 }
 
 .stat-card.warning {
-  border-left: 4px solid #f59e0b;
+  border-left-color: #f59e0b;
 }
 
 .stat-card.danger {
-  border-left: 4px solid #ef4444;
+  border-left-color: #ef4444;
 }
 
 .stat-icon {
@@ -839,28 +956,28 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
+  border-radius: 10px;
   margin-right: 16px;
   font-size: 24px;
 }
 
 .stat-card.primary .stat-icon {
-  background: rgba(59, 130, 246, 0.2);
+  background: #eff6ff;
   color: #3b82f6;
 }
 
 .stat-card.success .stat-icon {
-  background: rgba(16, 185, 129, 0.2);
+  background: #ecfdf5;
   color: #10b981;
 }
 
 .stat-card.warning .stat-icon {
-  background: rgba(245, 158, 11, 0.2);
+  background: #fffbeb;
   color: #f59e0b;
 }
 
 .stat-card.danger .stat-icon {
-  background: rgba(239, 68, 68, 0.2);
+  background: #fef2f2;
   color: #ef4444;
 }
 
@@ -871,13 +988,13 @@ onUnmounted(() => {
 .stat-value {
   font-size: 28px;
   font-weight: 700;
-  color: #ffffff;
+  color: #1e293b;
   line-height: 1.2;
 }
 
 .stat-label {
   font-size: 13px;
-  color: #94a3b8;
+  color: #64748b;
   margin-top: 4px;
 }
 
@@ -890,21 +1007,23 @@ onUnmounted(() => {
 }
 
 .chart-container {
-  background: rgba(255, 255, 255, 0.03);
+  background: #ffffff;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   overflow: hidden;
 }
 
 .chart-header {
   padding: 16px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid #f1f5f9;
+  background: #fafafa;
 }
 
 .chart-title {
   font-size: 15px;
   font-weight: 600;
-  color: #ffffff;
+  color: #334155;
 }
 
 .chart-body {
@@ -914,10 +1033,44 @@ onUnmounted(() => {
 
 /* 标签页 */
 .tabs-container {
-  background: rgba(255, 255, 255, 0.03);
+  background: #ffffff;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   overflow: hidden;
+}
+
+.tabs-container :deep(.el-tabs__header) {
+  margin: 0;
+  background: #fafafa;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.tabs-container :deep(.el-tabs__nav-wrap::after) {
+  height: 1px;
+  background: #e2e8f0;
+}
+
+.tabs-container :deep(.el-tabs__item) {
+  color: #64748b;
+  font-weight: 500;
+  padding: 0 20px;
+  height: 44px;
+  line-height: 44px;
+}
+
+.tabs-container :deep(.el-tabs__item.is-active) {
+  color: #3b82f6;
+  background: #ffffff;
+  border-bottom: 2px solid #3b82f6;
+}
+
+.tabs-container :deep(.el-tabs__item:hover) {
+  color: #3b82f6;
+}
+
+.tabs-container :deep(.el-tabs__content) {
+  padding: 0;
 }
 
 .tab-content {
@@ -930,26 +1083,29 @@ onUnmounted(() => {
 
 /* 表格样式 */
 :deep(.el-table) {
-  background: transparent;
+  background: #ffffff;
+  border-radius: 8px;
 }
 
 :deep(.el-table th) {
-  background: rgba(255, 255, 255, 0.05) !important;
-  color: #e2e8f0;
+  background: #f8fafc !important;
+  color: #475569;
   font-weight: 600;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 :deep(.el-table td) {
-  background: transparent;
-  color: #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 :deep(.el-table--striped .el-table__body tr.el-table__row--striped td) {
-  background: rgba(255, 255, 255, 0.02);
+  background: #fafafa;
 }
 
 :deep(.el-table--enable-row-hover .el-table__body tr:hover > td) {
-  background: rgba(255, 255, 255, 0.05);
+  background: #f1f5f9;
 }
 
 /* 文本样式 */
@@ -970,6 +1126,36 @@ onUnmounted(() => {
 .size-highlight {
   color: #8b5cf6;
   font-weight: 600;
+}
+
+/* SQL预览 */
+.sql-preview {
+  display: inline-block;
+  max-width: 400px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 12px;
+}
+
+/* SQL详情 */
+.sql-detail-container {
+  background: #1e293b;
+  border-radius: 8px;
+  padding: 16px;
+  max-height: 500px;
+  overflow: auto;
+}
+
+.sql-code {
+  margin: 0;
+  color: #e2e8f0;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 
 /* 响应式 */

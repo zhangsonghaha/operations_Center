@@ -41,6 +41,50 @@ public class SysDbBackup extends BaseEntity
     @Excel(name = "日志信息")
     private String logMsg;
 
+    /** ============ 扩展字段 ============ */
+    
+    /** 数据库类型 */
+    @Excel(name = "数据库类型")
+    private String dbType;
+
+    /** 备份方式 */
+    @Excel(name = "备份方式", readConverterExp = "full=全量,incremental=增量,differential=差异")
+    private String backupMode;
+
+    /** 备份级别 */
+    @Excel(name = "备份级别", readConverterExp = "instance=实例级,database=数据库级,table=表级")
+    private String backupLevel;
+
+    /** 备份目标 */
+    private String targetName;
+
+    /** 文件大小 */
+    private Long fileSize;
+
+    /** 文件MD5校验值 */
+    private String fileMd5;
+
+    /** 存储类型 */
+    private String storageType;
+
+    /** 存储配置 */
+    private String storageConfig;
+
+    /** 验证状态（0未验证 1验证成功 2验证失败） */
+    private String verifyStatus;
+
+    /** 验证信息 */
+    private String verifyMsg;
+
+    /** 是否压缩 */
+    private String compressEnabled;
+
+    /** 过期时间 */
+    private java.util.Date expireTime;
+
+    /** 是否删除（0正常 1已删除） */
+    private String isDeleted;
+
     public void setBackupId(Long backupId) 
     {
         this.backupId = backupId;
@@ -105,6 +149,110 @@ public class SysDbBackup extends BaseEntity
         return logMsg;
     }
 
+    public String getDbType() {
+        return dbType;
+    }
+
+    public void setDbType(String dbType) {
+        this.dbType = dbType;
+    }
+
+    public String getBackupMode() {
+        return backupMode;
+    }
+
+    public void setBackupMode(String backupMode) {
+        this.backupMode = backupMode;
+    }
+
+    public String getBackupLevel() {
+        return backupLevel;
+    }
+
+    public void setBackupLevel(String backupLevel) {
+        this.backupLevel = backupLevel;
+    }
+
+    public String getTargetName() {
+        return targetName;
+    }
+
+    public void setTargetName(String targetName) {
+        this.targetName = targetName;
+    }
+
+    public Long getFileSize() {
+        return fileSize;
+    }
+
+    public void setFileSize(Long fileSize) {
+        this.fileSize = fileSize;
+    }
+
+    public String getFileMd5() {
+        return fileMd5;
+    }
+
+    public void setFileMd5(String fileMd5) {
+        this.fileMd5 = fileMd5;
+    }
+
+    public String getStorageType() {
+        return storageType;
+    }
+
+    public void setStorageType(String storageType) {
+        this.storageType = storageType;
+    }
+
+    public String getStorageConfig() {
+        return storageConfig;
+    }
+
+    public void setStorageConfig(String storageConfig) {
+        this.storageConfig = storageConfig;
+    }
+
+    public String getVerifyStatus() {
+        return verifyStatus;
+    }
+
+    public void setVerifyStatus(String verifyStatus) {
+        this.verifyStatus = verifyStatus;
+    }
+
+    public String getVerifyMsg() {
+        return verifyMsg;
+    }
+
+    public void setVerifyMsg(String verifyMsg) {
+        this.verifyMsg = verifyMsg;
+    }
+
+    public String getCompressEnabled() {
+        return compressEnabled;
+    }
+
+    public void setCompressEnabled(String compressEnabled) {
+        this.compressEnabled = compressEnabled;
+    }
+
+    public java.util.Date getExpireTime() {
+        return expireTime;
+    }
+
+    public void setExpireTime(java.util.Date expireTime) {
+        this.expireTime = expireTime;
+    }
+
+    public String getIsDeleted() {
+        return isDeleted;
+    }
+
+    public void setIsDeleted(String isDeleted) {
+        this.isDeleted = isDeleted;
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
@@ -115,6 +263,14 @@ public class SysDbBackup extends BaseEntity
             .append("backupType", getBackupType())
             .append("status", getStatus())
             .append("logMsg", getLogMsg())
+            .append("dbType", getDbType())
+            .append("backupMode", getBackupMode())
+            .append("backupLevel", getBackupLevel())
+            .append("targetName", getTargetName())
+            .append("fileSize", getFileSize())
+            .append("fileMd5", getFileMd5())
+            .append("storageType", getStorageType())
+            .append("verifyStatus", getVerifyStatus())
             .append("createBy", getCreateBy())
             .append("createTime", getCreateTime())
             .toString();
