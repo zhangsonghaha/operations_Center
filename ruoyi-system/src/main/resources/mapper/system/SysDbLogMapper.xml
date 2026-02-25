@@ -7,7 +7,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <resultMap type="SysDbLog" id="SysDbLogResult">
         <result property="logId"    column="log_id"    />
         <result property="connId"    column="conn_id"    />
+        <result property="operationType"    column="operation_type"    />
         <result property="sqlContent"    column="sql_content"    />
+        <result property="affectedRows"    column="affected_rows"    />
         <result property="costTime"    column="cost_time"    />
         <result property="status"    column="status"    />
         <result property="errorMsg"    column="error_msg"    />
@@ -16,15 +18,20 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectSysDbLogVo">
-        select log_id, conn_id, sql_content, cost_time, status, error_msg, create_by, create_time from sys_db_log
+        select log_id, conn_id, operation_type, sql_content, affected_rows, cost_time, status, error_msg, create_by, create_time from sys_db_log
     </sql>
 
     <select id="selectSysDbLogList" parameterType="SysDbLog" resultMap="SysDbLogResult">
         <include refid="selectSysDbLogVo"/>
         <where>  
             <if test="connId != null "> and conn_id = #{connId}</if>
+            <if test="operationType != null and operationType != ''"> and operation_type = #{operationType}</if>
             <if test="sqlContent != null  and sqlContent != ''"> and sql_content like concat('%', #{sqlContent}, '%')</if>
             <if test="status != null  and status != ''"> and status = #{status}</if>
+            <if test="createBy != null and createBy != ''"> and create_by like concat('%', #{createBy}, '%')</if>
+            <if test="params.beginTime != null and params.beginTime != ''"> and create_time &gt;= #{params.beginTime}</if>
+            <if test="params.endTime != null and params.endTime != ''"> and create_time &lt;= #{params.endTime}</if>
+            <if test="params.keyword != null and params.keyword != ''"> and (sql_content like concat('%', #{params.keyword}, '%') or error_msg like concat('%', #{params.keyword}, '%'))</if>
         </where>
     </select>
     
@@ -37,7 +44,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         insert into sys_db_log
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test="connId != null">conn_id,</if>
+            <if test="operationType != null">operation_type,</if>
             <if test="sqlContent != null and sqlContent != ''">sql_content,</if>
+            <if test="affectedRows != null">affected_rows,</if>
             <if test="costTime != null">cost_time,</if>
             <if test="status != null">status,</if>
             <if test="errorMsg != null">error_msg,</if>
@@ -46,7 +55,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
          </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="connId != null">#{connId},</if>
+            <if test="operationType != null">#{operationType},</if>
             <if test="sqlContent != null and sqlContent != ''">#{sqlContent},</if>
+            <if test="affectedRows != null">#{affectedRows},</if>
             <if test="costTime != null">#{costTime},</if>
             <if test="status != null">#{status},</if>
             <if test="errorMsg != null">#{errorMsg},</if>
@@ -59,7 +70,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         update sys_db_log
         <trim prefix="SET" suffixOverrides=",">
             <if test="connId != null">conn_id = #{connId},</if>
+            <if test="operationType != null and operationType != ''">operation_type = #{operationType},</if>
             <if test="sqlContent != null and sqlContent != ''">sql_content = #{sqlContent},</if>
+            <if test="affectedRows != null">affected_rows = #{affectedRows},</if>
             <if test="costTime != null">cost_time = #{costTime},</if>
             <if test="status != null">status = #{status},</if>
             <if test="errorMsg != null">error_msg = #{errorMsg},</if>

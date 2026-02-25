@@ -227,6 +227,17 @@ public class SysDbBackupServiceImpl implements ISysDbBackupService
             backup.setStatus("0"); // 成功
             backup.setFileSize(file.length());
             sysDbBackupMapper.updateSysDbBackup(backup);
+
+            // 记录操作日志
+            SysDbLog log = new SysDbLog();
+            log.setConnId(connId);
+            log.setOperationType("BACKUP");
+            log.setSqlContent("备份数据库: " + connInfo.getDbName() + ", 文件: " + fileName);
+            log.setStatus("0");
+            log.setCostTime(System.currentTimeMillis() - backup.getCreateTime().getTime());
+            log.setCreateBy(SecurityUtils.getUsername());
+            log.setCreateTime(DateUtils.getNowDate());
+            sysDbLogService.insertSysDbLog(log);
         }
         catch (Exception e)
         {
@@ -234,6 +245,17 @@ public class SysDbBackupServiceImpl implements ISysDbBackupService
             backup.setStatus("1"); // 失败
             backup.setLogMsg(e.getMessage());
             sysDbBackupMapper.updateSysDbBackup(backup);
+
+            // 记录操作日志
+            SysDbLog log = new SysDbLog();
+            log.setConnId(connId);
+            log.setOperationType("BACKUP");
+            log.setSqlContent("备份数据库: " + connInfo.getDbName());
+            log.setStatus("1");
+            log.setErrorMsg(e.getMessage());
+            log.setCreateBy(SecurityUtils.getUsername());
+            log.setCreateTime(DateUtils.getNowDate());
+            sysDbLogService.insertSysDbLog(log);
             throw e;
         }
     }
@@ -454,6 +476,14 @@ public class SysDbBackupServiceImpl implements ISysDbBackupService
         // 保存用于日志记录的最终值
         final Long finalTargetConnId = targetConnId;
         
+        // 提前获取用户名，避免在单独线程中获取失败
+        String username = "system";
+        try {
+            username = SecurityUtils.getUsername();
+        } catch (Exception e) {
+            logger.warn("获取用户名失败，使用默认值 'system'", e);
+        }
+        
         try {
             // 1. 参数验证
             notifyProgress(callback, 0, "初始化恢复任务", "正在验证备份记录...");
@@ -612,11 +642,6 @@ public class SysDbBackupServiceImpl implements ISysDbBackupService
             notifyProgress(callback, 100, "恢复完成", "数据库恢复成功");
             notifyComplete(callback, true, "恢复成功");
             
-            // 更新备份记录中的恢复信息
-            backup.setLogMsg((backup.getLogMsg() != null ? backup.getLogMsg() + "\n" : "") + 
-                    "恢复时间: " + DateUtils.dateTimeNow() + ", 恢复到: " + targetConn.getHost() + "/" + targetConn.getDbName());
-            sysDbBackupMapper.updateSysDbBackup(backup);
-
             // 记录操作日志
             SysDbLog log = new SysDbLog();
             log.setConnId(targetConnId);
@@ -624,9 +649,14 @@ public class SysDbBackupServiceImpl implements ISysDbBackupService
             log.setSqlContent("恢复数据库: " + backup.getFileName() + " -> " + targetConn.getDbName());
             log.setStatus("0");
             log.setCostTime(System.currentTimeMillis() - startTime);
-            log.setCreateBy(SecurityUtils.getUsername());
+            log.setCreateBy(username);
             log.setCreateTime(DateUtils.getNowDate());
             sysDbLogService.insertSysDbLog(log);
+
+            // 更新备份记录中的恢复信息
+            backup.setLogMsg((backup.getLogMsg() != null ? backup.getLogMsg() + "\n" : "") + 
+                    "恢复时间: " + DateUtils.dateTimeNow() + ", 恢复到: " + targetConn.getHost() + "/" + targetConn.getDbName());
+            sysDbBackupMapper.updateSysDbBackup(backup);
 
             return true;
             
@@ -645,7 +675,7 @@ public class SysDbBackupServiceImpl implements ISysDbBackupService
             log.setStatus("1");
             log.setErrorMsg(e.getMessage());
             log.setCostTime(System.currentTimeMillis() - startTime);
-            log.setCreateBy(SecurityUtils.getUsername());
+            log.setCreateBy(username);
             log.setCreateTime(DateUtils.getNowDate());
             sysDbLogService.insertSysDbLog(log);
 

@@ -72,7 +72,8 @@ public class DbExecuteServiceImpl implements IDbExecuteService
         long endTime = System.currentTimeMillis();
         SysDbLog log = new SysDbLog();
         log.setConnId(connId);
-        log.setSqlContent(StringUtils.substring(sql, 0, 2000)); // 截取过长的SQL
+        log.setOperationType("EXECUTE");
+        log.setSqlContent(StringUtils.substring(sql, 0, 2000));
         log.setCostTime(endTime - startTime);
         log.setCreateTime(DateUtils.getNowDate());
         try {
