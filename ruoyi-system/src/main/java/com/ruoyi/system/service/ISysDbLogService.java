@@ -33,4 +33,20 @@ public interface ISysDbLogService
      * @return 结果
      */
     public int insertSysDbLog(SysDbLog sysDbLog);
+
+    /**
+     * 删除数据库操作日志
+     * 
+     * @param logId 数据库操作日志主键
+     * @return 结果
+     */
+    public int deleteSysDbLogByLogId(Long logId);
+
+    /**
+     * 批量删除数据库操作日志
+     * 
+     * @param logIds 需要删除的数据主键集合
+     * @return 结果
+     */
+    public int deleteSysDbLogByLogIds(Long[] logIds);
 }

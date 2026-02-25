@@ -335,6 +335,25 @@ export function listLog(query) {
   })
 }
 
+// 删除日志
+export function delLog(logIds) {
+  return request({
+    url: '/system/db/log/delete',
+    method: 'post',
+    data: logIds
+  })
+}
+
+// 导出日志
+export function exportLog(query) {
+  return request({
+    url: '/system/db/log/export',
+    method: 'get',
+    params: query,
+    responseType: 'blob'
+  })
+}
+
 // --- 备份策略 ---
 
 // 查询备份策略列表

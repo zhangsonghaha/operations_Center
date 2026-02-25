@@ -21,21 +21,49 @@ public class SysDbLog extends BaseEntity
     @Excel(name = "连接ID")
     private Long connId;
 
+    /** 操作类型（BACKUP备份 RESTORE恢复 EXECUTE执行） */
+    @Excel(name = "操作类型")
+    private String operationType;
+
     /** 执行语句 */
     @Excel(name = "执行语句")
     private String sqlContent;
+
+    /** 影响行数 */
+    @Excel(name = "影响行数")
+    private Integer affectedRows;
 
     /** 耗时(ms) */
     @Excel(name = "耗时(ms)")
     private Long costTime;
 
-    /** 状态（0成功 1失败） */
-    @Excel(name = "状态", readConverterExp = "0=成功,1=失败")
+    /** 状态（0成功 1失败 2进行中） */
+    @Excel(name = "状态", readConverterExp = "0=成功,1=失败,2=进行中")
     private String status;
 
     /** 错误信息 */
     @Excel(name = "错误信息")
     private String errorMsg;
+
+    public void setOperationType(String operationType) 
+    {
+        this.operationType = operationType;
+    }
+
+    public String getOperationType() 
+    {
+        return operationType;
+    }
+
+    public void setAffectedRows(Integer affectedRows) 
+    {
+        this.affectedRows = affectedRows;
+    }
+
+    public Integer getAffectedRows() 
+    {
+        return affectedRows;
+    }
 
     public void setLogId(Long logId) 
     {
