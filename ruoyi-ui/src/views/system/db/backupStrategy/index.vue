@@ -254,8 +254,7 @@
 </template>
 
 <script setup name="DbBackupStrategy">
-import { listStrategy, getStrategy, delStrategy, addStrategy, updateStrategy, executeStrategy } from "@/api/system/dbBackup";
-import { listConn } from "@/api/system/db";
+import { listStrategy, getStrategy, delStrategy, addStrategy, updateStrategy, executeStrategy, listConn } from "@/api/system/db";
 
 const { proxy } = getCurrentInstance();
 

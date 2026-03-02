@@ -43,6 +43,15 @@ public class OpsApp extends BaseEntity
     /** 停止脚本 */
     private String stopScript;
 
+    /** JVM启动参数 */
+    private String jvmParams;
+
+    /** 外部配置文件路径 */
+    private String configFilePath;
+
+    /** Spring Boot启动参数 */
+    private String springParams;
+
     /** 应用描述 */
     private String description;
 
@@ -109,6 +118,9 @@ public class OpsApp extends BaseEntity
     /** 应用包路径 */
     private String packagePath;
 
+    /** 部署配置JSON */
+    private String deployConfig;
+
     public void setPackagePath(String packagePath) 
     {
         this.packagePath = packagePath;
@@ -117,6 +129,16 @@ public class OpsApp extends BaseEntity
     public String getPackagePath() 
     {
         return packagePath;
+    }
+
+    public void setDeployConfig(String deployConfig) 
+    {
+        this.deployConfig = deployConfig;
+    }
+
+    public String getDeployConfig() 
+    {
+        return deployConfig;
     }
     
     public void setMonitorPorts(String monitorPorts) 
@@ -164,6 +186,37 @@ public class OpsApp extends BaseEntity
     {
         return stopScript;
     }
+
+    public void setJvmParams(String jvmParams) 
+    {
+        this.jvmParams = jvmParams;
+    }
+
+    public String getJvmParams() 
+    {
+        return jvmParams;
+    }
+
+    public void setConfigFilePath(String configFilePath) 
+    {
+        this.configFilePath = configFilePath;
+    }
+
+    public String getConfigFilePath() 
+    {
+        return configFilePath;
+    }
+
+    public void setSpringParams(String springParams) 
+    {
+        this.springParams = springParams;
+    }
+
+    public String getSpringParams() 
+    {
+        return springParams;
+    }
+
     public void setDescription(String description) 
     {
         this.description = description;
@@ -235,6 +288,9 @@ public class OpsApp extends BaseEntity
             .append("techStack", getTechStack())
             .append("deptId", getDeptId())
             .append("stopScript", getStopScript())
+            .append("jvmParams", getJvmParams())
+            .append("configFilePath", getConfigFilePath())
+            .append("springParams", getSpringParams())
             .append("description", getDescription())
             .append("serverIds", getServerIds())
             .append("status", getStatus())

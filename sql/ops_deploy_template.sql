@@ -63,7 +63,49 @@ CREATE TABLE `ops_deploy_record` (
 -- 4. 初始化默认模板数据
 -- ----------------------------
 INSERT INTO `ops_deploy_template` (`template_name`, `app_type`, `script_content`, `version`, `built_in`, `status`, `sha256`, `creator`, `create_time`, `remark`) VALUES 
-('Java标准部署模板', 'Java', 'steps:\n  - name: pull_code\n    command: git pull\n  - name: stop_app\n    command: ./stop.sh\n  - name: backup\n    command: cp -r app app_backup_${timestamp}\n  - name: replace_jar\n    command: cp target/*.jar app/\n  - name: start_app\n    command: ./start.sh\n  - name: health_check\n    url: ${health_check_url}\n    timeout: 30\n    retry: 3', 'v1.0.0', '1', '0', 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', 'admin', NOW(), '系统内置Java应用标准部署流程');
+('Java标准部署模板', 'Java', '#!/bin/bash
+# Java应用部署脚本
+# 变量定义
+APP_NAME="${app_name}"
+DEPLOY_PATH="${deploy_path}"
+PACKAGE_PATH="${package_path}"
+TIMESTAMP=$(date +%Y%m%d%H%M%S)
+
+echo "========== 开始部署 =========="
+echo "应用名称: $APP_NAME"
+echo "部署路径: $DEPLOY_PATH"
+echo "包路径: $PACKAGE_PATH"
+
+# 1. 停止应用
+echo "========== 1. 停止应用 =========="
+cd $DEPLOY_PATH
+if [ -f ./stop.sh ]; then
+    ./stop.sh
+    sleep 2
+fi
+
+# 2. 备份
+echo "========== 2. 备份应用 =========="
+if [ -d "$APP_NAME" ]; then
+    cp -r $APP_NAME ${APP_NAME}_backup_$TIMESTAMP
+    echo "备份完成: ${APP_NAME}_backup_$TIMESTAMP"
+fi
+
+# 3. 部署新版本
+echo "========== 3. 部署新版本 =========="
+if [ -n "$PACKAGE_PATH" ] && [ -f "$PACKAGE_PATH" ]; then
+    cp $PACKAGE_PATH $DEPLOY_PATH/
+    echo "包部署完成: $PACKAGE_PATH"
+fi
+
+# 4. 启动应用
+echo "========== 4. 启动应用 =========="
+if [ -f ./start.sh ]; then
+    ./start.sh
+    echo "应用启动完成"
+fi
+
+echo "========== 部署完成 =========="', 'v1.0.0', '1', '0', 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', 'admin', NOW(), '系统内置Java应用标准部署流程');
 
 INSERT INTO `ops_deploy_template_version` (`template_id`, `version`, `script_content`, `sha256`, `change_log`, `creator`, `create_time`) 
 SELECT id, version, script_content, sha256, '初始化创建', creator, create_time FROM `ops_deploy_template` WHERE `template_name` = 'Java标准部署模板';

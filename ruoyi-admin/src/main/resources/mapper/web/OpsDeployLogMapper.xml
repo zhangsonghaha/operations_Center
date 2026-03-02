@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.web.mapper.OpsDeployLogMapper">
+    
+    <resultMap type="OpsDeployLog" id="OpsDeployLogResult">
+        <result property="logId"        column="log_id"        />
+        <result property="appId"        column="app_id"        />
+        <result property="appName"      column="app_name"      />
+        <result property="serverId"     column="server_id"     />
+        <result property="serverName"   column="server_name"   />
+        <result property="deployType"   column="deploy_type"   />
+        <result property="deployStatus" column="deploy_status" />
+        <result property="logContent"   column="log_content"   />
+        <result property="startTime"    column="start_time"    />
+        <result property="endTime"      column="end_time"      />
+        <result property="executor"     column="executor"      />
+        <result property="errorMsg"     column="error_msg"     />
+        <result property="createTime"   column="create_time"   />
+        <result property="updateTime"   column="update_time"   />
+    </resultMap>
+
+    <sql id="selectOpsDeployLogVo">
+        select log_id, app_id, app_name, server_id, server_name, deploy_type, 
+               deploy_status, log_content, start_time, end_time, executor, 
+               error_msg, create_time, update_time
+        from t_ops_deploy_log
+    </sql>
+
+    <select id="selectOpsDeployLogList" parameterType="OpsDeployLog" resultMap="OpsDeployLogResult">
+        <include refid="selectOpsDeployLogVo"/>
+        <where>  
+            <if test="appId != null">
+                and app_id = #{appId}
+            </if>
+            <if test="appName != null and appName != ''">
+                and app_name like concat('%', #{appName}, '%')
+            </if>
+            <if test="serverId != null">
+                and server_id = #{serverId}
+            </if>
+            <if test="deployType != null and deployType != ''">
+                and deploy_type = #{deployType}
+            </if>
+            <if test="deployStatus != null and deployStatus != ''">
+                and deploy_status = #{deployStatus}
+            </if>
+            <if test="executor != null and executor != ''">
+                and executor = #{executor}
+            </if>
+        </where>
+        order by create_time desc
+    </select>
+    
+    <select id="selectOpsDeployLogById" parameterType="Long" resultMap="OpsDeployLogResult">
+        <include refid="selectOpsDeployLogVo"/>
+        where log_id = #{logId}
+    </select>
+        
+    <insert id="insertOpsDeployLog" parameterType="OpsDeployLog" useGeneratedKeys="true" keyProperty="logId">
+        insert into t_ops_deploy_log
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="appId != null">app_id,</if>
+            <if test="appName != null">app_name,</if>
+            <if test="serverId != null">server_id,</if>
+            <if test="serverName != null">server_name,</if>
+            <if test="deployType != null">deploy_type,</if>
+            <if test="deployStatus != null">deploy_status,</if>
+            <if test="logContent != null">log_content,</if>
+            <if test="startTime != null">start_time,</if>
+            <if test="endTime != null">end_time,</if>
+            <if test="executor != null">executor,</if>
+            <if test="errorMsg != null">error_msg,</if>
+            <if test="createTime != null">create_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="appId != null">#{appId},</if>
+            <if test="appName != null">#{appName},</if>
+            <if test="serverId != null">#{serverId},</if>
+            <if test="serverName != null">#{serverName},</if>
+            <if test="deployType != null">#{deployType},</if>
+            <if test="deployStatus != null">#{deployStatus},</if>
+            <if test="logContent != null">#{logContent},</if>
+            <if test="startTime != null">#{startTime},</if>
+            <if test="endTime != null">#{endTime},</if>
+            <if test="executor != null">#{executor},</if>
+            <if test="errorMsg != null">#{errorMsg},</if>
+            <if test="createTime != null">#{createTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateOpsDeployLog" parameterType="OpsDeployLog">
+        update t_ops_deploy_log
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="appId != null">app_id = #{appId},</if>
+            <if test="appName != null">app_name = #{appName},</if>
+            <if test="serverId != null">server_id = #{serverId},</if>
+            <if test="serverName != null">server_name = #{serverName},</if>
+            <if test="deployType != null">deploy_type = #{deployType},</if>
+            <if test="deployStatus != null">deploy_status = #{deployStatus},</if>
+            <if test="logContent != null">log_content = #{logContent},</if>
+            <if test="startTime != null">start_time = #{startTime},</if>
+            <if test="endTime != null">end_time = #{endTime},</if>
+            <if test="executor != null">executor = #{executor},</if>
+            <if test="errorMsg != null">error_msg = #{errorMsg},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where log_id = #{logId}
+    </update>
+    
+    <!-- 追加日志内容（使用 CONCAT 避免读取整个日志） -->
+    <update id="appendLogContent">
+        update t_ops_deploy_log
+        set log_content = CONCAT(IFNULL(log_content, ''), #{content}),
+            update_time = #{updateTime}
+        where log_id = #{logId}
+    </update>
+
+    <delete id="deleteOpsDeployLogById" parameterType="Long">
+        delete from t_ops_deploy_log where log_id = #{logId}
+    </delete>
+
+    <delete id="deleteOpsDeployLogByIds" parameterType="Long">
+        delete from t_ops_deploy_log where log_id in 
+        <foreach item="logId" collection="array" open="(" separator="," close=")">
+            #{logId}
+        </foreach>
+    </delete>
+</mapper>

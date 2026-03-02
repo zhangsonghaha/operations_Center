@@ -166,8 +166,8 @@ public class OpsReleaseApplyController extends BaseController
     @PostMapping("/execute/{id}")
     public AjaxResult execute(@PathVariable Long id)
     {
-        opsReleaseApplyService.executeRelease(id);
-        return AjaxResult.success();
+        Long recordId = opsReleaseApplyService.executeRelease(id);
+        return AjaxResult.success(recordId);
     }
 
     /**

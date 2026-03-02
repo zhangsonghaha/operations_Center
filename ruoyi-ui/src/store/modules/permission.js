@@ -121,6 +121,9 @@ export const loadView = (view) => {
       res = () => modules[path]()
     }
   }
+  if (!res) {
+    console.error(`Cannot find component for view: ${view}`)
+  }
   return res
 }
 

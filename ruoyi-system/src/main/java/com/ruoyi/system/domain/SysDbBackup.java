@@ -21,6 +21,9 @@ public class SysDbBackup extends BaseEntity
     @Excel(name = "连接ID")
     private Long connId;
 
+    /** 策略ID */
+    private Long strategyId;
+
     /** 备份文件名 */
     @Excel(name = "备份文件名")
     private String fileName;
@@ -102,6 +105,15 @@ public class SysDbBackup extends BaseEntity
     public Long getConnId() 
     {
         return connId;
+    }
+    public void setStrategyId(Long strategyId) 
+    {
+        this.strategyId = strategyId;
+    }
+
+    public Long getStrategyId() 
+    {
+        return strategyId;
     }
     public void setFileName(String fileName) 
     {

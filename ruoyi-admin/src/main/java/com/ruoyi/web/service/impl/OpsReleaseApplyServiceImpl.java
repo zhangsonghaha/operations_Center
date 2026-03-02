@@ -196,7 +196,7 @@ public class OpsReleaseApplyServiceImpl implements IOpsReleaseApplyService {
      * Execute Release
      */
     @Override
-    public void executeRelease(Long id) {
+    public Long executeRelease(Long id) {
         OpsReleaseApply apply = selectOpsReleaseApplyById(id);
         if (apply == null) {
             throw new RuntimeException("Release apply not found");
@@ -207,12 +207,24 @@ public class OpsReleaseApplyServiceImpl implements IOpsReleaseApplyService {
         }
 
         try {
+            // Parse deployParams
+            Map<String, String> params = null;
+            if (StringUtils.isNotEmpty(apply.getDeployParams())) {
+                try {
+                    params = com.alibaba.fastjson2.JSON.parseObject(apply.getDeployParams(), new com.alibaba.fastjson2.TypeReference<Map<String, String>>() {});
+                } catch (Exception e) {
+                    // Ignore parse error, use null params
+                }
+            }
+            
             // Trigger deployment
-            opsDeployTemplateService.deploy(apply.getTemplateId(), apply.getAppId(), null);
+            Long recordId = opsDeployTemplateService.deploy(apply.getTemplateId(), apply.getAppId(), params);
 
             // Update status to Released (4)
             apply.setStatus("4");
             updateOpsReleaseApply(apply);
+            
+            return recordId;
         } catch (Exception e) {
             // Update status to Failed (5)
             apply.setStatus("5");

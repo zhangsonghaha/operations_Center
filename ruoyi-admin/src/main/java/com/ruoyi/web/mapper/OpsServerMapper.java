@@ -1,11 +1,13 @@
 package com.ruoyi.web.mapper;
 
 import java.util.List;
+import org.apache.ibatis.annotations.Mapper;
 import com.ruoyi.web.domain.OpsServer;
 
 /**
  * 服务器资产Mapper接口
  */
+@Mapper
 public interface OpsServerMapper 
 {
     /**

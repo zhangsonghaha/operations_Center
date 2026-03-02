@@ -1,6 +1,6 @@
 <template>
   <div class="app-container">
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
+    <el-form ref="queryForm" :model="queryParams" size="small" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="发布标题" prop="title">
         <el-input
           v-model="queryParams.title"
@@ -129,20 +129,109 @@
         </div>
       </template>
     </el-dialog>
+
+    <el-dialog title="部署配置确认" v-model="deployConfirmOpen" width="900px" append-to-body destroy-on-close>
+      <div v-if="currentApp">
+        <el-descriptions title="应用信息" :column="2" border>
+          <el-descriptions-item label="应用名称">{{ currentApp.appName }}</el-descriptions-item>
+          <el-descriptions-item label="应用类型">
+            <dict-tag :options="sys_ops_app_type" :value="currentApp.appType" />
+          </el-descriptions-item>
+          <el-descriptions-item label="发布标题">{{ currentReleaseTitle }}</el-descriptions-item>
+          <el-descriptions-item label="版本号">{{ currentReleaseVersion }}</el-descriptions-item>
+        </el-descriptions>
+        
+        <el-divider content-position="left">部署配置</el-divider>
+        
+        <el-descriptions :column="1" border style="margin-top: 20px;">
+          <el-descriptions-item label="部署路径">{{ currentApp.deployPath || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="监控端口">{{ currentApp.monitorPorts || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="健康检查">{{ currentApp.healthCheckUrl || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="超时时间">{{ currentApp.deployTimeout || 60 }} 秒</el-descriptions-item>
+          <el-descriptions-item label="重试次数">{{ currentApp.retryCount || 0 }} 次</el-descriptions-item>
+        </el-descriptions>
+        
+        <el-divider content-position="left">关联服务器</el-divider>
+        
+        <el-descriptions :column="1" border style="margin-top: 20px;">
+          <el-descriptions-item label="关联服务器">
+            <el-tag v-for="serverId in serverIdList" :key="serverId" style="margin-right: 5px; margin-bottom: 5px;">
+              {{ serverId }}
+            </el-tag>
+            <span v-if="!hasServerIds" style="color: #909399">未配置服务器</span>
+          </el-descriptions-item>
+        </el-descriptions>
+        
+        <el-divider content-position="left">启动脚本</el-divider>
+        
+        <div style="margin-top: 20px; border: 1px solid #dcdfe6; border-radius: 4px; padding: 10px; background: #f5f7fa;">
+          <pre style="white-space: pre-wrap; margin: 0; font-size: 12px; max-height: 200px; overflow-y: auto;">{{ currentApp.startScript || '未配置启动脚本' }}</pre>
+        </div>
+      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="deployConfirmOpen = false">取 消</el-button>
+          <el-button type="primary" @click="confirmDeploy">确认部署</el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <!-- 部署执行日志对话框 -->
+    <el-dialog
+      title="部署执行日志"
+      v-model="deployLogVisible"
+      width="800px"
+      append-to-body
+      destroy-on-close
+    >
+      <div style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <span style="margin-right: 12px;">记录ID：{{ deployLog.recordId || '-' }}</span>
+          <span>状态：
+            <el-tag v-if="deployLog.status === '0'" type="warning" size="small">执行中</el-tag>
+            <el-tag v-else-if="deployLog.status === '2'" type="success" size="small">成功</el-tag>
+            <el-tag v-else-if="deployLog.status === '1'" type="danger" size="small">失败</el-tag>
+            <el-tag v-else type="info" size="small">未知</el-tag>
+          </span>
+          <span v-if="deployLog.exitCode !== null" style="margin-left: 12px;">
+            退出码：{{ deployLog.exitCode }}
+          </span>
+        </div>
+        <el-button
+          size="small"
+          type="primary"
+          text
+          @click="refreshDeployLog"
+        >刷新</el-button>
+      </div>
+      <el-scrollbar height="420px">
+        <pre
+          style="background:#1e293b;color:#e5e7eb;padding:12px;border-radius:4px;font-size:12px;line-height:1.6;white-space:pre-wrap;margin:0;"
+        >{{ deployLog.output || '暂无日志输出' }}</pre>
+      </el-scrollbar>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="closeDeployLog">关 闭</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup name="ReleasePending">
-import { listReleasePending, auditRelease } from "@/api/ops/release";
-import { listApp } from "@/api/ops/app";
+import { listReleasePending, auditRelease, executeRelease } from "@/api/ops/release";
+import { listApp, getApp } from "@/api/ops/app";
 import { getProcessProgress } from "@/api/ops/workflow";
 import BpmnViewer from "@/components/BpmnViewer";
-import { getCurrentInstance, reactive, ref, toRefs } from 'vue';
+import { getCurrentInstance, reactive, ref, toRefs, computed, onUnmounted } from 'vue';
+import { getDeployRecord } from "@/api/ops/deployRecord";
 
 const { proxy } = getCurrentInstance();
+const { sys_ops_app_type } = proxy.useDict('sys_ops_app_type');
 
 const releaseList = ref([]);
 const auditOpen = ref(false);
+const deployConfirmOpen = ref(false);
 const processOpen = ref(false);
 const bpmnXml = ref("");
 const activeActivityIds = ref([]);
@@ -152,6 +241,19 @@ const ids = ref([]);
 const total = ref(0);
 
 const appOptions = ref([]);
+const currentRelease = ref(null);
+const currentApp = ref(null);
+
+// 部署日志相关
+const deployLogVisible = ref(false);
+const deployLog = reactive({
+  recordId: null,
+  status: '',
+  exitCode: null,
+  output: '',
+});
+const deployLogLoading = ref(false);
+let deployLogTimer = null;
 
 const data = reactive({
   auditForm: {},
@@ -165,6 +267,25 @@ const data = reactive({
 });
 
 const { queryParams, auditForm } = toRefs(data);
+
+const currentReleaseTitle = computed(() => {
+  return currentRelease.value?.title || '-';
+});
+
+const currentReleaseVersion = computed(() => {
+  return currentRelease.value?.version || '-';
+});
+
+const hasServerIds = computed(() => {
+  return currentApp.value && currentApp.value.serverIds;
+});
+
+const serverIdList = computed(() => {
+  if (!currentApp.value || !currentApp.value.serverIds) {
+    return [];
+  }
+  return currentApp.value.serverIds.split(',');
+});
 
 function getList() {
   loading.value = true;
@@ -217,6 +338,20 @@ function submitAudit() {
         proxy.$modal.msgError("驳回时必须填写审批意见");
         return;
       }
+      
+      if (auditForm.value.status === '2') {
+        const releaseItem = releaseList.value.find(item => item.id === auditForm.value.id);
+        if (releaseItem) {
+          currentRelease.value = releaseItem;
+          auditOpen.value = false;
+          getApp(releaseItem.appId).then(res => {
+            currentApp.value = res.data;
+            deployConfirmOpen.value = true;
+          });
+          return;
+        }
+      }
+      
       auditRelease(auditForm.value).then(() => {
         proxy.$modal.msgSuccess("审批完成");
         auditOpen.value = false;
@@ -224,6 +359,100 @@ function submitAudit() {
       });
     }
   });
+}
+
+function confirmDeploy() {
+  auditRelease({
+    id: auditForm.value.id,
+    status: '2',
+    auditReason: auditForm.value.auditReason
+  }).then(() => {
+    deployConfirmOpen.value = false;
+    proxy.$modal.msgSuccess("审批通过，开始部署...");
+    executeRelease(auditForm.value.id).then(res => {
+      const recordId = res.data;
+      proxy.$modal.msgSuccess("部署任务已启动");
+      if (recordId) {
+        openDeployLog(recordId);
+      }
+    }).catch(() => {
+      proxy.$modal.msgError("部署启动失败");
+    });
+    getList();
+  });
+}
+
+function openDeployLog(recordId) {
+  if (!recordId) {
+    proxy.$modal.msgWarning("未获取到部署记录ID，无法显示日志");
+    return;
+  }
+  deployLog.recordId = recordId;
+  deployLog.status = '0';
+  deployLog.exitCode = null;
+  deployLog.output = '';
+  deployLogVisible.value = true;
+  startDeployLogPolling();
+}
+
+function startDeployLogPolling() {
+  stopDeployLogPolling();
+  fetchDeployLog();
+  deployLogTimer = setInterval(() => {
+    fetchDeployLog();
+  }, 2000);
+}
+
+function stopDeployLogPolling() {
+  if (deployLogTimer) {
+    clearInterval(deployLogTimer);
+    deployLogTimer = null;
+  }
+}
+
+function fetchDeployLog() {
+  if (!deployLog.recordId) return;
+  deployLogLoading.value = true;
+  getDeployRecord(deployLog.recordId)
+    .then(res => {
+      const data = res.data || {};
+      deployLog.status = data.status || '';
+      deployLog.output = '';
+      deployLog.exitCode = null;
+      if (data.jsonResult) {
+        try {
+          const parsed = JSON.parse(data.jsonResult);
+          deployLog.output = parsed.output || '';
+          if (parsed.exitCode !== undefined && parsed.exitCode !== null) {
+            deployLog.exitCode = parsed.exitCode;
+          }
+        } catch (e) {
+          deployLog.output = String(data.jsonResult);
+        }
+      }
+      if (deployLog.status === '1' || deployLog.status === '2') {
+        stopDeployLogPolling();
+      }
+    })
+    .catch(err => {
+      deployLog.output = '获取部署日志失败: ' + (err?.message || '');
+      if (!deployLog.status) {
+        deployLog.status = '1';
+      }
+      stopDeployLogPolling();
+    })
+    .finally(() => {
+      deployLogLoading.value = false;
+    });
+}
+
+function refreshDeployLog() {
+  fetchDeployLog();
+}
+
+function closeDeployLog() {
+  deployLogVisible.value = false;
+  stopDeployLogPolling();
 }
 
 function handleViewProcess(row) {
@@ -243,4 +472,8 @@ function handleViewProcess(row) {
 
 getAppList();
 getList();
+
+onUnmounted(() => {
+  stopDeployLogPolling();
+});
 </script>

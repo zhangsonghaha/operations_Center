@@ -1,1319 +1,1468 @@
 <template>
-  <div class="app-container">
-    <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="连接ID" prop="connId">
-        <el-input
-          v-model="queryParams.connId"
-          placeholder="请输入连接ID"
-          clearable
-          style="width: 240px"
-          @keyup.enter="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="文件名" prop="fileName">
-        <el-input
-          v-model="queryParams.fileName"
-          placeholder="请输入文件名"
-          clearable
-          style="width: 240px"
-          @keyup.enter="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-        <el-button icon="Refresh" @click="resetQuery">重置</el-button>
-      </el-form-item>
-    </el-form>
-
-    <el-row :gutter="10" class="mb8">
-      <el-col :span="1.5">
-        <el-button
-          type="primary"
-          plain
-          icon="Plus"
-          @click="handleAdd"
-          v-hasPermi="['system:db:backup:add']"
-        >新建备份</el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button
-          type="danger"
-          plain
-          icon="Delete"
-          :disabled="multiple"
-          @click="handleDelete"
-          v-hasPermi="['system:db:backup:remove']"
-        >删除</el-button>
-      </el-col>
-      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
-    </el-row>
-
-    <el-table v-loading="loading" :data="backupList" @selection-change="handleSelectionChange">
-      <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="备份ID" align="center" prop="backupId" />
-      <el-table-column label="连接名称" align="center" prop="connId" :formatter="connNameFormat" />
-      <el-table-column label="文件名" align="center" prop="fileName" show-overflow-tooltip />
-      <el-table-column label="备份类型" align="center" prop="backupType">
-        <template #default="scope">
-          <span>{{ scope.row.backupType === '0' ? '手动' : '自动' }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="状态" align="center" prop="status">
-        <template #default="scope">
-          <el-tag :type="scope.row.status === '0' ? 'success' : 'danger'">
-            {{ scope.row.status === '0' ? '成功' : '失败' }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="创建时间" align="center" prop="createTime" width="180">
-        <template #default="scope">
-          <span>{{ parseTime(scope.row.createTime) }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
-        <template #default="scope">
-          <el-button
-            link
-            type="primary"
-            icon="Download"
-            @click="handleDownload(scope.row)"
-            v-if="scope.row.status === '0'"
-          >下载</el-button>
-          <el-button
-            link
-            type="warning"
-            icon="RefreshLeft"
-            @click="handleRestore(scope.row)"
-            v-if="scope.row.status === '0'"
-            v-hasPermi="['system:db:backup:restore']"
-          >恢复</el-button>
-          <el-button
-            link
-            type="danger"
-            icon="Delete"
-            @click="handleDelete(scope.row)"
-            v-hasPermi="['system:db:backup:remove']"
-          >删除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
-
-    <pagination
-      v-show="total>0"
-      :total="total"
-      v-model:page="queryParams.pageNum"
-      v-model:limit="queryParams.pageSize"
-      @pagination="getList"
-    />
-
-    <!-- 新建备份对话框 -->
-    <el-dialog :title="title" v-model="open" width="700px" append-to-body>
-      <el-steps :active="activeStep" finish-status="success" simple style="margin-bottom: 20px">
-        <el-step title="选择连接" />
-        <el-step title="配置选项" />
-        <el-step title="选择目标" />
-      </el-steps>
-
-      <!-- 步骤1: 选择连接 -->
-      <div v-show="activeStep === 0">
-        <el-form ref="backupRef" :model="form" :rules="rules" label-width="100px">
-          <el-form-item label="选择连接" prop="connId">
-            <el-select v-model="form.connId" placeholder="请选择数据库连接" style="width: 100%" @change="handleConnChange">
-              <el-option
-                v-for="item in connList"
-                :key="item.connId"
-                :label="item.connName"
-                :value="item.connId"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="数据库类型">
-            <el-tag size="large" type="info">{{ dbTypeLabel }}</el-tag>
-          </el-form-item>
-        </el-form>
-        <div class="step-actions">
-          <el-button type="primary" @click="nextStep" :disabled="!form.connId">下一步</el-button>
+  <div class="app-container backup-center">
+    <!-- 仪表盘区域 -->
+    <div class="dashboard-section">
+      <div class="dashboard-header">
+        <div class="header-title">
+          <el-icon class="title-icon"><DataLine /></el-icon>
+          <span>备份管理中心</span>
         </div>
-      </div>
-
-      <!-- 步骤2: 配置选项 -->
-      <div v-show="activeStep === 1">
-        <el-form :model="form" label-width="100px">
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <el-form-item label="备份方式">
-                <el-radio-group v-model="form.backupMode">
-                  <el-radio-button label="full">全量备份</el-radio-button>
-                  <el-radio-button label="incremental">增量备份</el-radio-button>
-                </el-radio-group>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="备份范围">
-                <el-radio-group v-model="backupScope" @change="handleScopeChange">
-                  <el-radio-button label="all">全库备份</el-radio-button>
-                  <el-radio-button label="partial">部分备份</el-radio-button>
-                </el-radio-group>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-form-item label="备份级别" v-if="backupScope === 'partial'">
-            <el-radio-group v-model="form.backupLevel">
-              <el-radio-button label="database">数据库级</el-radio-button>
-              <el-radio-button label="table">表级</el-radio-button>
-            </el-radio-group>
-          </el-form-item>
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <el-form-item label="备份方式">
-                <el-select v-model="form.backupMode" placeholder="请选择" style="width: 100%">
-                  <el-option label="全量备份" value="full" />
-                  <el-option label="增量备份" value="incremental" />
-                </el-select>
-                <div class="form-tip">
-                  <el-icon><InfoFilled /></el-icon>
-                  <span v-if="form.backupMode === 'incremental'">基于binlog位置，需要REPLICATION CLIENT权限，无权限时自动回退到全量备份</span>
-                  <span v-else>全量备份包含完整的表结构和数据</span>
-                </div>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="压缩备份">
-                <el-switch v-model="form.compressEnabled" active-value="1" inactive-value="0" />
-                <div class="form-tip">
-                  <el-icon><InfoFilled /></el-icon>
-                  <span>启用后使用Gzip压缩，可减少50%-90%存储空间</span>
-                </div>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <el-form-item label="存储类型">
-                <el-select v-model="form.storageType" placeholder="请选择" style="width: 100%">
-                  <el-option label="本地存储" value="local" />
-                  <el-option label="FTP服务器" value="ftp" />
-                  <el-option label="SFTP服务器" value="sftp" />
-                  <el-option label="阿里云OSS" value="aliyun_oss" />
-                  <el-option label="腾讯云COS" value="tencent_cos" />
-                </el-select>
-                <div class="form-tip" v-if="form.storageType !== 'local'">
-                  <el-icon><Warning /></el-icon>
-                  <span>非本地存储需要在【系统管理-参数配置】中配置对应存储参数</span>
-                </div>
-              </el-form-item>
-            </el-col>
-          </el-row>
-        </el-form>
-        <div class="step-actions">
-          <el-button @click="prevStep">上一步</el-button>
-          <el-button type="primary" @click="nextStep">
-            {{ backupScope === 'all' ? '开始备份' : '下一步' }}
+        <div class="header-actions">
+          <el-button type="primary" :icon="Plus" @click="handleQuickBackup">
+            快速备份
+          </el-button>
+          <el-button :icon="Refresh" @click="refreshAll" :loading="refreshing">
+            刷新
           </el-button>
         </div>
       </div>
 
-      <!-- 步骤3: 选择目标（树形结构） -->
-      <div v-show="activeStep === 2">
-        <div class="tree-header">
-          <el-input v-model="treeFilter" placeholder="搜索数据库/表" prefix-icon="Search" clearable style="width: 250px" />
-          <el-button type="primary" link @click="checkAll">全选</el-button>
-          <el-button type="primary" link @click="uncheckAll">清空</el-button>
-        </div>
-        <div class="tree-container">
-          <el-tree
-            ref="treeRef"
-            :data="dbTreeData"
-            show-checkbox
-            node-key="id"
-            :props="{ label: 'label', children: 'children' }"
-            :filter-node-method="filterNode"
-            @check-change="handleTreeCheck"
-            default-expand-all
-          >
-            <template #default="{ node, data }">
-              <span class="tree-node">
-                <el-icon v-if="data.type === 'database'" class="node-icon"><Collection /></el-icon>
-                <el-icon v-else class="node-icon"><Grid /></el-icon>
-                <span>{{ node.label }}</span>
-                <el-tag v-if="data.type === 'database'" size="small" type="info" style="margin-left: 8px">库</el-tag>
-                <el-tag v-else size="small" type="success" style="margin-left: 8px">表</el-tag>
-              </span>
-            </template>
-          </el-tree>
-        </div>
-        <div class="selected-info">
-          已选择: <el-tag type="primary">{{ selectedTargets.length }}</el-tag> 个对象
-          <el-tag v-if="selectedTargets.length >= 100" type="danger" size="small" style="margin-left: 8px">已达上限</el-tag>
-          <span v-else style="margin-left: 8px; color: #909399; font-size: 12px">(最多100个)</span>
-        </div>
-        <div class="step-actions">
-          <el-button @click="prevStep">上一步</el-button>
-          <el-button type="primary" @click="submitForm" :loading="submitLoading">开始备份</el-button>
-        </div>
-      </div>
-    </el-dialog>
-
-    <!-- 恢复备份对话框 -->
-    <el-dialog 
-      title="恢复备份" 
-      v-model="restoreOpen" 
-      width="900px" 
-      append-to-body
-      :close-on-click-modal="false"
-      :close-on-press-escape="false"
-      :show-close="!restoreRunning"
-      custom-class="restore-dialog"
-    >
-      <!-- 步骤1: 选择恢复目标 -->
-      <div v-if="restoreStep === 1">
-        <el-alert
-          title="恢复操作将覆盖目标数据库中的数据，请谨慎操作！"
-          type="warning"
-          :closable="false"
-          show-icon
-          style="margin-bottom: 20px"
-        />
-        <el-form ref="restoreRef" :model="restoreForm" :rules="restoreRules" label-width="120px">
-          <el-form-item label="备份文件">
-            <el-tag type="success">{{ currentBackup?.fileName }}</el-tag>
-            <span style="margin-left: 10px; color: #909399; font-size: 13px">
-              {{ formatFileSize(currentBackup?.fileSize) }}
-            </span>
-          </el-form-item>
-          <el-form-item label="源数据库">
-            <el-tag>{{ getConnNameById(currentBackup?.connId) }}</el-tag>
-          </el-form-item>
-          <el-form-item label="目标连接" prop="targetConnId">
-            <el-select v-model="restoreForm.targetConnId" placeholder="请选择恢复目标" style="width: 100%">
-              <el-option
-                v-for="item in connList"
-                :key="item.connId"
-                :label="item.connName + ' (' + item.host + '/' + item.dbName + ')'"
-                :value="item.connId"
-              />
-            </el-select>
-            <div class="form-tip">
-              <el-icon><Warning /></el-icon>
-              <span>恢复操作将覆盖目标数据库中的同名表数据，请确保目标数据库可写</span>
+      <!-- 统计卡片 -->
+      <div class="stats-grid">
+        <div class="stat-card primary">
+          <div class="stat-visual">
+            <div class="stat-ring">
+              <el-icon><Collection /></el-icon>
             </div>
-          </el-form-item>
-        </el-form>
-        <div class="step-actions">
-          <el-button @click="restoreOpen = false">取消</el-button>
-          <el-button type="primary" @click="startRestore">开始恢复</el-button>
-        </div>
-      </div>
-
-      <!-- 步骤2: 恢复进度 -->
-      <div v-else-if="restoreStep === 2">
-        <!-- 状态卡片 -->
-        <div class="restore-status-cards">
-          <el-row :gutter="20">
-            <el-col :span="8">
-              <div class="status-card" :class="restoreStatus">
-                <div class="status-icon-container">
-                  <el-icon class="status-icon" :size="40">
-                    <Loading v-if="restoreStatus === 'running'" />
-                    <CircleCheck v-else-if="restoreStatus === 'success'" />
-                    <CircleClose v-else-if="restoreStatus === 'error'" />
-                    <Timer v-else />
-                  </el-icon>
-                </div>
-                <div class="status-text">{{ restoreStatusText }}</div>
-                <div class="status-desc">{{ restoreStepText }}</div>
-              </div>
-            </el-col>
-            <el-col :span="8">
-              <div class="status-card info">
-                <div class="status-value">{{ restoreProgress }}%</div>
-                <div class="status-label">恢复进度</div>
-                <el-progress 
-                  :percentage="restoreProgress" 
-                  :status="restoreProgressStatus"
-                  :stroke-width="10"
-                  :show-text="false"
-                  class="progress-bar"
-                />
-              </div>
-            </el-col>
-            <el-col :span="8">
-              <div class="status-card info">
-                <div class="status-value">{{ restoreTableProgress }}</div>
-                <div class="status-label">表进度</div>
-                <div class="status-desc">{{ restoreScope }}</div>
-              </div>
-            </el-col>
-          </el-row>
-        </div>
-
-        <!-- 影响范围 -->
-        <div class="restore-scope" v-if="restoreScope">
-          <el-divider content-position="left">
-            <el-icon><InfoFilled /></el-icon>
-            影响范围
-          </el-divider>
-          <el-tag type="info" size="small" effect="plain">{{ restoreScope }}</el-tag>
-        </div>
-
-        <!-- 实时日志 -->
-        <div class="restore-log-section">
-          <el-divider content-position="left">
-            <el-icon><Document /></el-icon>
-            恢复日志
-            <el-tag v-if="restoreRunning" type="danger" size="small" effect="dark" style="margin-left: 8px">实时</el-tag>
-          </el-divider>
-          <div ref="logContainer" class="restore-log-container">
-            <div 
-              v-for="(log, index) in restoreLogs" 
-              :key="index" 
-              class="log-line"
-              :class="getLogClass(log)"
-            >
-              <span class="log-time">{{ log.time }}</span>
-              <span class="log-content">{{ log.content }}</span>
-            </div>
-            <div v-if="restoreLogs.length === 0" class="log-empty">
-              <el-empty description="等待恢复开始..." :image-size="80" />
+          </div>
+          <div class="stat-info">
+            <div class="stat-value">{{ stats.totalBackups }}</div>
+            <div class="stat-label">总备份数</div>
+            <div class="stat-trend">
+              <span class="trend-up">+{{ stats.todayBackups }}</span>
+              <span class="trend-label">今日新增</span>
             </div>
           </div>
         </div>
 
-        <div class="step-actions">
-          <el-button 
-            v-if="restoreStatus === 'success' || restoreStatus === 'error'" 
-            @click="closeRestoreDialog"
-            :type="restoreStatus === 'success' ? 'primary' : ''"
-          >
-            {{ restoreStatus === 'success' ? '完成' : '关闭' }}
-          </el-button>
-          <el-button 
-            v-if="restoreStatus === 'running'" 
-            type="danger" 
-            @click="cancelRestore"
-          >
-            取消恢复
+        <div class="stat-card success">
+          <div class="stat-visual">
+            <div class="stat-ring">
+              <el-icon><CircleCheck /></el-icon>
+            </div>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value">{{ stats.successRate }}%</div>
+            <div class="stat-label">成功率</div>
+            <div class="stat-trend">
+              <el-progress :percentage="stats.successRate" :stroke-width="4" :show-text="false" />
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-card warning">
+          <div class="stat-visual">
+            <div class="stat-ring">
+              <el-icon><Timer /></el-icon>
+            </div>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value">{{ stats.activeStrategies }}</div>
+            <div class="stat-label">启用策略</div>
+            <div class="stat-trend">
+              <span class="text-muted">下次执行: {{ stats.nextBackupTime }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-card danger">
+          <div class="stat-visual">
+            <div class="stat-ring">
+              <el-icon><Coin /></el-icon>
+            </div>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value">{{ formatStorage(stats.usedStorage) }}</div>
+            <div class="stat-label">存储使用</div>
+            <div class="stat-trend">
+              <el-progress 
+                :percentage="storagePercent" 
+                :stroke-width="4" 
+                :status="storagePercent > 80 ? 'exception' : ''"
+                :show-text="false" 
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 图表区域 -->
+      <div class="charts-grid">
+        <div class="chart-panel">
+          <div class="panel-header">
+            <span class="panel-title">备份趋势</span>
+            <el-radio-group v-model="trendPeriod" size="small">
+              <el-radio-button label="7d">7天</el-radio-button>
+              <el-radio-button label="30d">30天</el-radio-button>
+              <el-radio-button label="90d">90天</el-radio-button>
+            </el-radio-group>
+          </div>
+          <div ref="trendChart" class="chart-body"></div>
+        </div>
+
+        <div class="chart-panel">
+          <div class="panel-header">
+            <span class="panel-title">存储分布</span>
+          </div>
+          <div ref="storageChart" class="chart-body"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 策略管理区域 -->
+    <div class="strategy-section">
+      <div class="section-header">
+        <div class="section-title">
+          <el-icon><Setting /></el-icon>
+          <span>备份策略</span>
+          <el-tag type="info" size="small">{{ strategyList.length }}个策略</el-tag>
+        </div>
+        <el-button type="primary" link :icon="Plus" @click="handleAddStrategy">
+          新增策略
+        </el-button>
+      </div>
+
+      <div class="strategy-grid">
+        <div 
+          v-for="strategy in strategyList" 
+          :key="strategy.strategyId"
+          class="strategy-card"
+          :class="{ 'strategy-enabled': strategy.enabled === '0' }"
+          @click="showStrategyDetail(strategy)"
+        >
+          <div class="strategy-header">
+            <div class="strategy-icon" :class="`icon-${strategy.dbType}`">
+              <el-icon><DataBase /></el-icon>
+            </div>
+            <div class="strategy-status">
+              <el-switch 
+                v-model="strategy.enabled" 
+                active-value="0" 
+                inactive-value="1"
+                @click.stop
+                @change="handleStrategyStatusChange(strategy)"
+              />
+            </div>
+          </div>
+          <div class="strategy-body">
+            <div class="strategy-name">{{ strategy.strategyName }}</div>
+            <div class="strategy-meta">
+              <el-tag size="small" :type="getBackupModeType(strategy.backupMode)">
+                {{ getBackupModeLabel(strategy.backupMode) }}
+              </el-tag>
+              <el-tag size="small" type="info">
+                {{ getBackupLevelLabel(strategy.backupLevel) }}
+              </el-tag>
+            </div>
+            <div class="strategy-schedule">
+              <el-icon><Clock /></el-icon>
+              <span>{{ strategy.cronExpression }}</span>
+            </div>
+          </div>
+          <div class="strategy-footer">
+            <div class="strategy-stats">
+              <span>保留: {{ strategy.retentionDays }}天</span>
+              <span v-if="strategy.compressEnabled === '1'">压缩: {{ strategy.compressType }}</span>
+            </div>
+            <div class="strategy-actions">
+              <el-button 
+                type="primary" 
+                link 
+                size="small" 
+                :icon="VideoPlay"
+                @click.stop="handleExecuteStrategy(strategy)"
+              >
+                执行
+              </el-button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 备份记录区域 -->
+    <div class="backup-section">
+      <div class="section-header">
+        <div class="section-title">
+          <el-icon><FolderOpened /></el-icon>
+          <span>备份记录</span>
+        </div>
+        <div class="section-filters">
+          <el-select v-model="filterStrategy" placeholder="全部策略" clearable size="small" style="width: 150px">
+            <el-option label="手动备份" value="manual" />
+            <el-option v-for="s in strategyList" :key="s.strategyId" :label="s.strategyName" :value="s.strategyId" />
+          </el-select>
+          <el-select v-model="filterStatus" placeholder="全部状态" clearable size="small" style="width: 120px">
+            <el-option label="成功" value="0" />
+            <el-option label="失败" value="1" />
+          </el-select>
+          <el-button :icon="Delete" size="small" @click="handleCleanExpired">
+            清理过期
           </el-button>
         </div>
       </div>
+
+      <el-table v-loading="loading" :data="filteredBackupList" stripe>
+        <el-table-column type="selection" width="50" />
+        <el-table-column label="备份文件" min-width="250">
+          <template #default="scope">
+            <div class="backup-file">
+              <el-icon class="file-icon" :size="20"><Document /></el-icon>
+              <div class="file-info">
+                <div class="file-name">{{ scope.row.fileName }}</div>
+                <div class="file-meta">
+                  <el-tag size="small" :type="scope.row.backupType === '0' ? 'info' : 'success'">
+                    {{ scope.row.backupType === '0' ? '手动' : '自动' }}
+                  </el-tag>
+                  <span v-if="scope.row.strategyId" class="strategy-tag">
+                    {{ getStrategyName(scope.row.strategyId) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="数据库" width="150">
+          <template #default="scope">
+            <div class="db-info">
+              <el-icon><DataBase /></el-icon>
+              <span>{{ getConnName(scope.row.connId) }}</span>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="大小" width="100">
+          <template #default="scope">
+            <span class="file-size">{{ formatFileSize(scope.row.fileSize) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="状态" width="100">
+          <template #default="scope">
+            <div class="backup-status">
+              <el-icon v-if="scope.row.status === '0'" class="status-success"><CircleCheck /></el-icon>
+              <el-icon v-else class="status-error"><CircleClose /></el-icon>
+              <span>{{ scope.row.status === '0' ? '成功' : '失败' }}</span>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="创建时间" width="160">
+          <template #default="scope">
+            <div class="time-info">
+              <el-icon><Clock /></el-icon>
+              <span>{{ parseTime(scope.row.createTime) }}</span>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="180" fixed="right">
+          <template #default="scope">
+            <el-button link type="primary" :icon="Download" @click="handleDownload(scope.row)">
+              下载
+            </el-button>
+            <el-button link type="warning" :icon="RefreshLeft" @click="handleRestore(scope.row)">
+              恢复
+            </el-button>
+            <el-dropdown trigger="click">
+              <el-button link type="primary">
+                <el-icon><More /></el-icon>
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item :icon="View" @click="handleVerify(scope.row)">
+                    验证完整性
+                  </el-dropdown-item>
+                  <el-dropdown-item :icon="Delete" divided @click="handleDelete(scope.row)">
+                    删除
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <pagination
+        v-show="total > 0"
+        :total="total"
+        v-model:page="queryParams.pageNum"
+        v-model:limit="queryParams.pageSize"
+        @pagination="getList"
+      />
+    </div>
+
+    <!-- 快速备份对话框 -->
+    <el-dialog title="快速备份" v-model="quickBackupOpen" width="600px" append-to-body>
+      <el-steps :active="quickBackupStep" finish-status="success" simple>
+        <el-step title="选择策略" />
+        <el-step title="确认执行" />
+      </el-steps>
+
+      <div v-if="quickBackupStep === 0" class="quick-backup-step">
+        <div class="strategy-select-hint">选择要执行的备份策略，或创建临时备份</div>
+        <div class="strategy-options">
+          <div 
+            v-for="strategy in enabledStrategies" 
+            :key="strategy.strategyId"
+            class="strategy-option"
+            :class="{ active: selectedStrategy?.strategyId === strategy.strategyId }"
+            @click="selectedStrategy = strategy"
+          >
+            <div class="option-icon">
+              <el-icon><DataBase /></el-icon>
+            </div>
+            <div class="option-info">
+              <div class="option-name">{{ strategy.strategyName }}</div>
+              <div class="option-desc">
+                {{ getBackupModeLabel(strategy.backupMode) }} · 
+                {{ getBackupLevelLabel(strategy.backupLevel) }} · 
+                {{ strategy.cronExpression }}
+              </div>
+            </div>
+          </div>
+          <div 
+            class="strategy-option manual-option"
+            :class="{ active: selectedStrategy === null }"
+            @click="selectedStrategy = null"
+          >
+            <div class="option-icon">
+              <el-icon><Plus /></el-icon>
+            </div>
+            <div class="option-info">
+              <div class="option-name">临时备份</div>
+              <div class="option-desc">不保存为策略，仅执行一次</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div v-else class="quick-backup-step">
+        <el-alert
+          v-if="selectedStrategy"
+          :title="'将使用策略 [' + selectedStrategy.strategyName + '] 执行备份'"
+          type="info"
+          :closable="false"
+          show-icon
+        />
+        <el-alert
+          v-else
+          title="将创建临时备份，使用默认配置"
+          type="warning"
+          :closable="false"
+          show-icon
+        />
+        <el-form :model="quickBackupForm" label-width="100px" style="margin-top: 20px">
+          <el-form-item label="目标连接">
+            <el-select v-model="quickBackupForm.connId" placeholder="请选择" style="width: 100%">
+              <el-option v-for="conn in connList" :key="conn.connId" :label="conn.connName" :value="conn.connId" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="备份级别" v-if="!selectedStrategy">
+            <el-radio-group v-model="quickBackupForm.backupLevel">
+              <el-radio-button label="instance">实例级</el-radio-button>
+              <el-radio-button label="database">数据库级</el-radio-button>
+            </el-radio-group>
+          </el-form-item>
+        </el-form>
+      </div>
+
+      <template #footer>
+        <el-button v-if="quickBackupStep > 0" @click="quickBackupStep--">上一步</el-button>
+        <el-button v-if="quickBackupStep < 1" type="primary" @click="quickBackupStep++" :disabled="!selectedStrategy && quickBackupStep === 0">
+          下一步
+        </el-button>
+        <el-button v-else type="primary" @click="submitQuickBackup" :loading="backupLoading">
+          开始备份
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 策略详情抽屉 -->
+    <el-drawer v-model="strategyDetailOpen" :title="currentStrategy?.strategyName" size="600px">
+      <div v-if="currentStrategy" class="strategy-detail">
+        <div class="detail-section">
+          <div class="detail-title">基本信息</div>
+          <el-descriptions :column="2" border>
+            <el-descriptions-item label="数据库类型">{{ currentStrategy.dbType }}</el-descriptions-item>
+            <el-descriptions-item label="备份方式">{{ getBackupModeLabel(currentStrategy.backupMode) }}</el-descriptions-item>
+            <el-descriptions-item label="备份级别">{{ getBackupLevelLabel(currentStrategy.backupLevel) }}</el-descriptions-item>
+            <el-descriptions-item label="定时表达式">{{ currentStrategy.cronExpression }}</el-descriptions-item>
+          </el-descriptions>
+        </div>
+
+        <div class="detail-section">
+          <div class="detail-title">保留策略</div>
+          <el-descriptions :column="2" border>
+            <el-descriptions-item label="保留天数">{{ currentStrategy.retentionDays }}天</el-descriptions-item>
+            <el-descriptions-item label="保留数量">{{ currentStrategy.retentionCount }}个</el-descriptions-item>
+          </el-descriptions>
+        </div>
+
+        <div class="detail-section">
+          <div class="detail-title">存储配置</div>
+          <el-descriptions :column="2" border>
+            <el-descriptions-item label="存储类型">{{ currentStrategy.storageType }}</el-descriptions-item>
+            <el-descriptions-item label="压缩">{{ currentStrategy.compressEnabled === '1' ? currentStrategy.compressType : '不压缩' }}</el-descriptions-item>
+          </el-descriptions>
+        </div>
+
+        <div class="detail-section">
+          <div class="detail-title">
+            关联备份记录
+            <el-link type="primary" @click="filterByStrategy(currentStrategy.strategyId)">查看全部</el-link>
+          </div>
+          <el-timeline>
+            <el-timeline-item
+              v-for="backup in strategyBackups.slice(0, 5)"
+              :key="backup.backupId"
+              :type="backup.status === '0' ? 'success' : 'danger'"
+              :timestamp="parseTime(backup.createTime)"
+            >
+              <div class="timeline-content">
+                <span>{{ backup.fileName }}</span>
+                <el-tag size="small" :type="backup.status === '0' ? 'success' : 'danger'">
+                  {{ backup.status === '0' ? '成功' : '失败' }}
+                </el-tag>
+              </div>
+            </el-timeline-item>
+          </el-timeline>
+        </div>
+      </div>
+    </el-drawer>
+
+    <!-- 恢复向导对话框 -->
+    <RestoreWizard
+      v-model="restoreOpen"
+      :backup="currentBackup"
+      :connections="connList"
+      @success="getList"
+    />
+
+    <!-- 新增策略对话框 -->
+    <el-dialog :title="strategyDialogTitle" v-model="strategyDialogOpen" width="700px" append-to-body>
+      <el-form ref="strategyFormRef" :model="strategyForm" :rules="strategyRules" label-width="120px">
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="策略名称" prop="strategyName">
+              <el-input v-model="strategyForm.strategyName" placeholder="请输入策略名称" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="选择连接" prop="connId">
+              <el-select v-model="strategyForm.connId" placeholder="请选择数据库连接" style="width: 100%">
+                <el-option v-for="item in connList" :key="item.connId" :label="item.connName" :value="item.connId" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="数据库类型" prop="dbType">
+              <el-select v-model="strategyForm.dbType" placeholder="请选择" style="width: 100%">
+                <el-option label="MySQL/MariaDB" value="mysql" />
+                <el-option label="PostgreSQL" value="postgresql" />
+                <el-option label="MongoDB" value="mongodb" />
+                <el-option label="Redis" value="redis" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="备份方式" prop="backupMode">
+              <el-select v-model="strategyForm.backupMode" placeholder="请选择" style="width: 100%">
+                <el-option label="全量备份" value="full" />
+                <el-option label="增量备份" value="incremental" />
+                <el-option label="差异备份" value="differential" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="备份级别" prop="backupLevel">
+              <el-select v-model="strategyForm.backupLevel" placeholder="请选择" style="width: 100%">
+                <el-option label="实例级" value="instance" />
+                <el-option label="数据库级" value="database" />
+                <el-option label="表级" value="table" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="备份目标" prop="targetName">
+              <el-input v-model="strategyForm.targetName" placeholder="数据库名/表名，多个用逗号分隔" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-divider>定时配置</el-divider>
+
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="Cron表达式" prop="cronExpression">
+              <el-input v-model="strategyForm.cronExpression" placeholder="如: 0 0 2 * * ?" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="策略状态">
+              <el-radio-group v-model="strategyForm.enabled">
+                <el-radio label="0">启用</el-radio>
+                <el-radio label="1">停用</el-radio>
+              </el-radio-group>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-divider>保留策略</el-divider>
+
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="保留天数">
+              <el-input-number v-model="strategyForm.retentionDays" :min="1" :max="365" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="保留数量">
+              <el-input-number v-model="strategyForm.retentionCount" :min="1" :max="100" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-divider>高级选项</el-divider>
+
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="启用压缩">
+              <el-switch v-model="strategyForm.compressEnabled" active-value="1" inactive-value="0" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="压缩类型" v-if="strategyForm.compressEnabled === '1'">
+              <el-select v-model="strategyForm.compressType" placeholder="请选择" style="width: 100%">
+                <el-option label="Gzip" value="gzip" />
+                <el-option label="Bzip2" value="bzip2" />
+                <el-option label="Zip" value="zip" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="存储类型" prop="storageType">
+              <el-select v-model="strategyForm.storageType" placeholder="请选择" style="width: 100%">
+                <el-option label="本地存储" value="local" />
+                <el-option label="FTP服务器" value="ftp" />
+                <el-option label="SFTP服务器" value="sftp" />
+                <el-option label="阿里云OSS" value="aliyun_oss" />
+                <el-option label="腾讯云COS" value="tencent_cos" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="启用告警">
+              <el-switch v-model="strategyForm.alertEnabled" active-value="1" inactive-value="0" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-form-item label="备注">
+          <el-input v-model="strategyForm.remark" type="textarea" :rows="2" placeholder="请输入备注" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="strategyDialogOpen = false">取 消</el-button>
+        <el-button type="primary" @click="submitStrategyForm">确 定</el-button>
+      </template>
     </el-dialog>
   </div>
 </template>
 
-<script setup name="DbBackup">
-import { listBackup, delBackup, backup, backupWithOptions, listConn, getTableList, restoreBackup, getRestoreProgress } from "@/api/system/db";
-import { Collection, Grid, InfoFilled, Warning, RefreshLeft, Loading, CircleCheck, CircleClose, Timer, Document } from '@element-plus/icons-vue';
+<script setup name="BackupCenter">
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import * as echarts from 'echarts'
+import {
+  Plus, Refresh, DataLine, Collection, CircleCheck, Timer, Coin,
+  Setting, FolderOpened, Coin as DataBase, Clock, Document, Download,
+  RefreshLeft, View, Delete, More, VideoPlay
+} from '@element-plus/icons-vue'
+import {
+  listBackup, delBackup, backupWithOptions, listStrategy, executeStrategy as apiExecuteStrategy,
+  updateStrategy, addStrategy, listConn, cleanExpired, verifyBackup
+} from '@/api/system/db'
+import RestoreWizard from './components/RestoreWizard.vue'
 
-const { proxy } = getCurrentInstance();
+const { proxy } = getCurrentInstance()
 
-const loading = ref(true);
-const ids = ref([]);
-const single = ref(true);
-const multiple = ref(true);
-const showSearch = ref(true);
-const total = ref(0);
-const backupList = ref([]);
-const connList = ref([]);
-const title = ref("新建备份");
-const open = ref(false);
-const activeStep = ref(0);
-const backupScope = ref('all');
-const treeFilter = ref('');
-const treeRef = ref(null);
-const dbTreeData = ref([]);
-const selectedTargets = ref([]);
-const submitLoading = ref(false);
+// 统计数据
+const stats = ref({
+  totalBackups: 0,
+  todayBackups: 0,
+  successRate: 98,
+  activeStrategies: 0,
+  nextBackupTime: '--',
+  usedStorage: 0,
+  totalStorage: 107374182400 // 100GB
+})
+const storagePercent = computed(() => Math.round((stats.value.usedStorage / stats.value.totalStorage) * 100))
 
-// 恢复相关变量
-const restoreOpen = ref(false);
-const restoreStep = ref(1);
-const restoreRunning = ref(false);
-const restoreStatus = ref('waiting'); // waiting/running/success/error
-const restoreStatusText = ref('准备中');
-const restoreStepText = ref('等待开始');
-const restoreProgress = ref(0);
-const restoreProgressStatus = ref('');
-const restoreTableProgress = ref('0/0');
-const restoreScope = ref('');
-const restoreLogs = ref([]);
-const currentBackup = ref(null);
-const logContainer = ref(null);
-const restoreTaskId = ref(null);
+// 策略列表
+const strategyList = ref([])
+const enabledStrategies = computed(() => strategyList.value.filter(s => s.enabled === '0'))
 
-const restoreForm = reactive({
-  targetConnId: null
-});
+// 备份列表
+const loading = ref(false)
+const backupList = ref([])
+const total = ref(0)
+const queryParams = ref({
+  pageNum: 1,
+  pageSize: 10
+})
+const filterStrategy = ref('')
+const filterStatus = ref('')
 
-const restoreRules = {
-  targetConnId: [{ required: true, message: "请选择目标连接", trigger: "change" }]
-};
-
-const data = reactive({
-  form: {
-    connId: null,
-    dbType: 'mysql',
-    backupMode: 'full',
-    backupLevel: 'database',
-    targetName: '',
-    storageType: 'local',
-    compressEnabled: '1'
-  },
-  queryParams: {
-    pageNum: 1,
-    pageSize: 10,
-    connId: null,
-    fileName: null,
-  },
-  rules: {
-    connId: [{ required: true, message: "请选择连接", trigger: "change" }]
+const filteredBackupList = computed(() => {
+  let list = backupList.value
+  if (filterStrategy.value) {
+    if (filterStrategy.value === 'manual') {
+      list = list.filter(b => !b.strategyId)
+    } else {
+      list = list.filter(b => b.strategyId === filterStrategy.value)
+    }
   }
-});
+  if (filterStatus.value !== '') {
+    list = list.filter(b => b.status === filterStatus.value)
+  }
+  return list
+})
 
-const { queryParams, form, rules } = toRefs(data);
+// 连接列表
+const connList = ref([])
 
-// 计算数据库类型标签
-const dbTypeLabel = computed(() => {
-  const typeMap = {
-    'mysql': 'MySQL/MariaDB',
-    'postgresql': 'PostgreSQL',
-    'mongodb': 'MongoDB',
-    'redis': 'Redis'
-  };
-  return typeMap[form.value.dbType] || form.value.dbType || 'MySQL/MariaDB';
-});
+// 图表
+const trendChart = ref(null)
+const storageChart = ref(null)
+let trendChartInstance = null
+let storageChartInstance = null
+const trendPeriod = ref('7d')
 
-// 监听树形搜索
-watch(treeFilter, (val) => {
-  treeRef.value?.filter(val);
-});
+// 快速备份
+const quickBackupOpen = ref(false)
+const quickBackupStep = ref(0)
+const selectedStrategy = ref(null)
+const quickBackupForm = ref({
+  connId: null,
+  backupLevel: 'instance'
+})
+const backupLoading = ref(false)
 
-function getList() {
-  loading.value = true;
-  listBackup(queryParams.value).then(response => {
-    backupList.value = response.rows;
-    total.value = response.total;
-    loading.value = false;
-  });
+// 策略详情
+const strategyDetailOpen = ref(false)
+const currentStrategy = ref(null)
+const strategyBackups = ref([])
+
+// 恢复
+const restoreOpen = ref(false)
+const currentBackup = ref(null)
+
+// 刷新状态
+const refreshing = ref(false)
+
+// 获取统计数据
+function getStats() {
+  // 计算统计数据
+  stats.value.totalBackups = backupList.value.length
+  const today = new Date().toDateString()
+  stats.value.todayBackups = backupList.value.filter(b => 
+    new Date(b.createTime).toDateString() === today
+  ).length
+  
+  const successCount = backupList.value.filter(b => b.status === '0').length
+  stats.value.successRate = backupList.value.length > 0 
+    ? Math.round((successCount / backupList.value.length) * 100) 
+    : 100
+  
+  stats.value.activeStrategies = strategyList.value.filter(s => s.enabled === '0').length
+  
+  const totalSize = backupList.value.reduce((sum, b) => sum + (b.fileSize || 0), 0)
+  stats.value.usedStorage = totalSize
 }
 
+// 获取策略列表
+function getStrategyList() {
+  listStrategy({ pageSize: 100 }).then(response => {
+    strategyList.value = response.rows || []
+    getStats()
+  })
+}
+
+// 获取备份列表
+function getList() {
+  loading.value = true
+  listBackup(queryParams.value).then(response => {
+    backupList.value = response.rows || []
+    total.value = response.total || 0
+    loading.value = false
+    getStats()
+    updateCharts()
+  })
+}
+
+// 获取连接列表
 function getConnList() {
   listConn().then(response => {
-    connList.value = response.rows;
-  });
+    connList.value = response.rows || []
+  })
 }
 
-function connNameFormat(row) {
-  const conn = connList.value.find(c => c.connId === row.connId);
-  return conn ? conn.connName : row.connId;
+// 刷新全部
+function refreshAll() {
+  refreshing.value = true
+  Promise.all([getStrategyList(), getList()]).finally(() => {
+    refreshing.value = false
+  })
 }
 
-function cancel() {
-  open.value = false;
-  reset();
+// 快速备份
+function handleQuickBackup() {
+  quickBackupOpen.value = true
+  quickBackupStep.value = 0
+  selectedStrategy.value = null
+  quickBackupForm.value = { connId: null, backupLevel: 'instance' }
 }
 
-function reset() {
-  form.value = {
+function submitQuickBackup() {
+  backupLoading.value = true
+  
+  const params = selectedStrategy.value ? {
+    connId: quickBackupForm.value.connId || selectedStrategy.value.connId,
+    dbType: selectedStrategy.value.dbType,
+    backupMode: selectedStrategy.value.backupMode,
+    backupLevel: selectedStrategy.value.backupLevel,
+    targetName: selectedStrategy.value.targetName,
+    storageType: selectedStrategy.value.storageType,
+    compressEnabled: selectedStrategy.value.compressEnabled,
+    strategyId: selectedStrategy.value.strategyId
+  } : {
+    connId: quickBackupForm.value.connId,
+    dbType: 'mysql',
+    backupMode: 'full',
+    backupLevel: quickBackupForm.value.backupLevel,
+    targetName: '',
+    storageType: 'local',
+    compressEnabled: '1'
+  }
+  
+  backupWithOptions(params).then(() => {
+    proxy.$modal.msgSuccess('备份任务已启动')
+    quickBackupOpen.value = false
+    getList()
+  }).finally(() => {
+    backupLoading.value = false
+  })
+}
+
+// 策略相关
+const strategyDialogOpen = ref(false)
+const strategyDialogTitle = ref('新增策略')
+const strategyFormRef = ref(null)
+const strategyForm = ref({
+  strategyName: '',
+  connId: null,
+  dbType: 'mysql',
+  backupMode: 'full',
+  backupLevel: 'database',
+  targetName: '',
+  cronExpression: '0 0 2 * * ?',
+  enabled: '0',
+  retentionDays: 7,
+  retentionCount: 10,
+  compressEnabled: '1',
+  compressType: 'gzip',
+  storageType: 'local',
+  alertEnabled: '0',
+  remark: ''
+})
+const strategyRules = {
+  strategyName: [{ required: true, message: '请输入策略名称', trigger: 'blur' }],
+  connId: [{ required: true, message: '请选择连接', trigger: 'change' }],
+  dbType: [{ required: true, message: '请选择数据库类型', trigger: 'change' }],
+  backupMode: [{ required: true, message: '请选择备份方式', trigger: 'change' }],
+  backupLevel: [{ required: true, message: '请选择备份级别', trigger: 'change' }],
+  cronExpression: [{ required: true, message: '请输入定时表达式', trigger: 'blur' }],
+  storageType: [{ required: true, message: '请选择存储类型', trigger: 'change' }]
+}
+
+function handleAddStrategy() {
+  strategyDialogTitle.value = '新增策略'
+  strategyForm.value = {
+    strategyName: '',
     connId: null,
     dbType: 'mysql',
     backupMode: 'full',
     backupLevel: 'database',
     targetName: '',
+    cronExpression: '0 0 2 * * ?',
+    enabled: '0',
+    retentionDays: 7,
+    retentionCount: 10,
+    compressEnabled: '1',
+    compressType: 'gzip',
     storageType: 'local',
-    compressEnabled: '1'
-  };
-  proxy.resetForm("backupRef");
-  activeStep.value = 0;
-  backupScope.value = 'all';
-  selectedTargets.value = [];
-  dbTreeData.value = [];
-  treeFilter.value = '';
-}
-
-function handleConnChange(val) {
-  const conn = connList.value.find(c => c.connId === val);
-  if (conn) {
-    form.value.dbType = conn.dbType || 'mysql';
+    alertEnabled: '0',
+    remark: ''
   }
+  strategyDialogOpen.value = true
 }
 
-// 步骤控制
-function nextStep() {
-  if (activeStep.value === 0 && !form.value.connId) {
-    proxy.$modal.msgError("请选择数据库连接");
-    return;
-  }
-  
-  // 如果是全库备份，在第二步直接提交
-  if (activeStep.value === 1 && backupScope.value === 'all') {
-    submitForm();
-    return;
-  }
-  
-  // 进入第三步时加载树形数据
-  if (activeStep.value === 1 && backupScope.value === 'partial') {
-    loadDbTreeData();
-  }
-  
-  activeStep.value++;
+function submitStrategyForm() {
+  strategyFormRef.value.validate(valid => {
+    if (valid) {
+      addStrategy(strategyForm.value).then(() => {
+        proxy.$modal.msgSuccess('新增成功')
+        strategyDialogOpen.value = false
+        getStrategyList()
+      })
+    }
+  })
 }
 
-function prevStep() {
-  activeStep.value--;
+function showStrategyDetail(strategy) {
+  currentStrategy.value = strategy
+  strategyBackups.value = backupList.value.filter(b => b.strategyId === strategy.strategyId)
+  strategyDetailOpen.value = true
 }
 
-// 备份范围切换
-function handleScopeChange(val) {
-  if (val === 'all') {
-    form.value.backupLevel = 'instance';
-  } else {
-    form.value.backupLevel = 'database';
-  }
+function handleStrategyStatusChange(strategy) {
+  updateStrategy(strategy).then(() => {
+    proxy.$modal.msgSuccess('状态更新成功')
+  })
 }
 
-// 加载树形数据
-function loadDbTreeData() {
-  if (!form.value.connId) return;
-  
-  // 构建树形数据
-  const dbName = connList.value.find(c => c.connId === form.value.connId)?.dbName || 'database';
-  
-  getTableList(form.value.connId).then(response => {
-    const tables = response.data || [];
-    dbTreeData.value = [{
-      id: dbName,
-      label: dbName,
-      type: 'database',
-      children: tables.map((table, index) => ({
-        id: `${dbName}.${table}`,
-        label: table,
-        type: 'table'
-      }))
-    }];
-  });
+function handleExecuteStrategy(strategy) {
+  proxy.$modal.confirm(`确定要立即执行策略 "${strategy.strategyName}" 吗？`).then(() => {
+    apiExecuteStrategy(strategy.strategyId).then(() => {
+      proxy.$modal.msgSuccess('备份任务已启动')
+      setTimeout(getList, 3000)
+    })
+  })
 }
 
-// 树形筛选
-function filterNode(value, data) {
-  if (!value) return true;
-  return data.label.toLowerCase().includes(value.toLowerCase());
+function filterByStrategy(strategyId) {
+  filterStrategy.value = strategyId
+  strategyDetailOpen.value = false
 }
 
-// 树形选择变化
-function handleTreeCheck() {
-  const checkedNodes = treeRef.value?.getCheckedNodes(true) || [];
-  const tables = checkedNodes.filter(n => n.type === 'table');
-  
-  // 限制最多选择100个表
-  if (tables.length > 100) {
-    proxy.$modal.msgWarning("最多只能选择100个表，已自动选择前100个");
-    // 只保留前100个
-    const limitedNodes = checkedNodes.slice(0, 100);
-    treeRef.value?.setCheckedNodes(limitedNodes);
-    selectedTargets.value = limitedNodes.filter(n => n.type === 'table').map(n => n.label);
-  } else {
-    selectedTargets.value = tables.map(n => n.label);
-  }
-  
-  form.value.targetName = selectedTargets.value.join(',');
+// 备份操作
+function handleDownload(row) {
+  const resource = '/profile/backup/' + row.fileName
+  proxy.$download.resource(resource)
 }
 
-// 全选/清空
-function checkAll() {
-  const allTables = dbTreeData.value[0]?.children || [];
-  if (allTables.length > 100) {
-    proxy.$modal.msgWarning(`共有 ${allTables.length} 个表，超过100个限制，将只选择前100个`);
-    treeRef.value?.setCheckedNodes(allTables.slice(0, 100));
-  } else {
-    treeRef.value?.setCheckedNodes(allTables);
-  }
-  handleTreeCheck();
+function handleRestore(row) {
+  currentBackup.value = row
+  restoreOpen.value = true
 }
 
-function uncheckAll() {
-  treeRef.value?.setCheckedKeys([]);
-  handleTreeCheck();
-}
-
-function handleQuery() {
-  queryParams.value.pageNum = 1;
-  getList();
-}
-
-function resetQuery() {
-  proxy.resetForm("queryRef");
-  handleQuery();
-}
-
-function handleSelectionChange(selection) {
-  ids.value = selection.map(item => item.backupId);
-  single.value = selection.length != 1;
-  multiple.value = !selection.length;
-}
-
-function handleAdd() {
-  reset();
-  open.value = true;
-  title.value = "新建备份";
-}
-
-function submitForm() {
-  // 如果是部分备份，检查是否选择了目标
-  if (backupScope.value === 'partial' && !form.value.targetName) {
-    proxy.$modal.msgError("请至少选择一个备份目标");
-    return;
-  }
-  
-  submitLoading.value = true;
-  proxy.$modal.loading("正在备份中，请稍候...");
-  
-  backupWithOptions(
-    form.value.connId,
-    form.value.dbType,
-    form.value.backupMode,
-    backupScope.value === 'all' ? 'instance' : form.value.backupLevel,
-    form.value.targetName,
-    form.value.storageType,
-    form.value.compressEnabled
-  ).then(response => {
-    submitLoading.value = false;
-    proxy.$modal.closeLoading();
-    proxy.$modal.msgSuccess("备份成功");
-    open.value = false;
-    getList();
+function handleVerify(row) {
+  proxy.$modal.loading('正在验证备份文件...')
+  verifyBackup(row.backupId).then(() => {
+    proxy.$modal.closeLoading()
+    proxy.$modal.msgSuccess('验证成功')
   }).catch(() => {
-    proxy.$modal.closeLoading();
-  });
+    proxy.$modal.closeLoading()
+  })
 }
 
 function handleDelete(row) {
-  const backupIds = row.backupId || ids.value;
-  proxy.$modal.confirm('是否确认删除备份记录编号为"' + backupIds + '"的数据项？').then(function() {
-    return delBackup(backupIds);
-  }).then(() => {
-    getList();
-    proxy.$modal.msgSuccess("删除成功");
-  }).catch(() => {});
+  proxy.$modal.confirm('是否确认删除该备份记录？').then(() => {
+    delBackup(row.backupId).then(() => {
+      proxy.$modal.msgSuccess('删除成功')
+      getList()
+    })
+  })
 }
 
-function handleDownload(row) {
-  const resource = "/profile/backup/" + row.fileName;
-  proxy.$download.resource(resource);
+function handleCleanExpired() {
+  proxy.$modal.prompt('请输入保留天数', '清理过期备份', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    inputPattern: /^[1-9]\d*$/,
+    inputErrorMessage: '请输入有效的天数'
+  }).then(({ value }) => {
+    cleanExpired({ retentionDays: parseInt(value) }).then(response => {
+      proxy.$modal.msgSuccess(response.msg)
+      getList()
+    })
+  })
 }
 
-// ==================== 恢复功能 ====================
-
-function handleRestore(row) {
-  currentBackup.value = row;
-  restoreOpen.value = true;
-  restoreStep.value = 1;
-  restoreForm.targetConnId = null;
-  resetRestoreStatus();
-}
-
-function resetRestoreStatus() {
-  restoreRunning.value = false;
-  restoreStatus.value = 'waiting';
-  restoreStatusText.value = '准备中';
-  restoreStepText.value = '等待开始';
-  restoreProgress.value = 0;
-  restoreProgressStatus.value = '';
-  restoreTableProgress.value = '0/0';
-  restoreScope.value = '';
-  restoreLogs.value = [];
-  restoreTaskId.value = 'restore_' + Date.now();
-  
-  // 停止轮询
-  if (pollTimer) {
-    clearTimeout(pollTimer);
-    pollTimer = null;
+// 图表初始化
+function initCharts() {
+  if (trendChart.value) {
+    trendChartInstance = echarts.init(trendChart.value)
   }
+  if (storageChart.value) {
+    storageChartInstance = echarts.init(storageChart.value)
+  }
+  updateCharts()
 }
 
-function startRestore() {
-  proxy.$refs.restoreRef.validate(valid => {
-    if (!valid) return;
+function updateCharts() {
+  if (!trendChartInstance || !storageChartInstance) return
+  
+  // 备份趋势图
+  const dates = []
+  const successData = []
+  const failData = []
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date()
+    date.setDate(date.getDate() - i)
+    const dateStr = date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })
+    dates.push(dateStr)
     
-    restoreStep.value = 2;
-    restoreRunning.value = true;
-    restoreStatus.value = 'running';
-    restoreStatusText.value = '恢复中';
-    
-    // 启动恢复任务
-    restoreBackup({
-      backupId: currentBackup.value.backupId,
-      targetConnId: restoreForm.targetConnId
-    }).then(response => {
-      // 获取任务ID
-      restoreTaskId.value = response.data || response.msg;
-      addRestoreLog('INFO', '恢复任务已启动，任务ID: ' + restoreTaskId.value);
-      
-      // 开始轮询进度
-      pollRestoreProgress();
-    }).catch(error => {
-      restoreStatus.value = 'error';
-      restoreStatusText.value = '启动失败';
-      restoreStepText.value = error.message || '启动恢复任务失败';
-      addRestoreLog('ERROR', '启动恢复任务失败: ' + (error.message || '未知错误'));
-      restoreRunning.value = false;
-    });
-  });
-}
-
-// 轮询获取恢复进度
-let pollTimer = null;
-
-function pollRestoreProgress() {
-  if (!restoreTaskId.value || !restoreRunning.value) {
-    return;
+    const dayBackups = backupList.value.filter(b => {
+      const backupDate = new Date(b.createTime)
+      return backupDate.toDateString() === date.toDateString()
+    })
+    successData.push(dayBackups.filter(b => b.status === '0').length)
+    failData.push(dayBackups.filter(b => b.status === '1').length)
   }
   
-  getRestoreProgress(restoreTaskId.value).then(response => {
-    const progress = response.data;
-    if (!progress) {
-      return;
-    }
-    
-    // 更新状态
-    restoreStatus.value = progress.status === 'completed' ? 'success' : 
-                        progress.status === 'failed' ? 'error' : 'running';
-    
-    // 更新进度
-    if (progress.status === 'running') {
-      restoreProgress.value = progress.progress || 0;
-      restoreStatusText.value = '恢复中';
-      restoreStepText.value = progress.currentTable || '正在恢复...';
-    }
-    
-    // 更新表进度
-    if (progress.totalTables) {
-      // 确保completedTables不超过totalTables
-      const completed = Math.min(progress.completedTables || 0, progress.totalTables);
-      restoreTableProgress.value = `${completed}/${progress.totalTables}`;
-    }
-    
-    // 更新影响范围
-    if (progress.targetDatabase) {
-      restoreScope.value = progress.targetDatabase;
-    }
-    
-    // 更新日志
-    if (progress.logs && progress.logs.length > 0) {
-      // 只显示新日志
-      const oldLen = restoreLogs.value.length;
-      progress.logs.forEach(log => {
-        if (!restoreLogs.value.find(l => l.content === log)) {
-          const type = log.includes('[ERROR]') ? 'ERROR' :
-                      log.includes('[WARN]') ? 'WARN' :
-                      log.includes('[SUCCESS]') ? 'SUCCESS' :
-                      log.includes('[PROGRESS]') ? 'PROGRESS' : 'INFO';
-          addRestoreLog(type, log);
-        }
-      });
-    }
-    
-    // 检查是否完成
-    if (progress.status === 'completed') {
-      restoreStatus.value = 'success';
-      restoreStatusText.value = '恢复成功';
-      restoreStepText.value = '数据恢复完成';
-      restoreProgress.value = 100;
-      restoreRunning.value = false;
-      addRestoreLog('SUCCESS', '恢复完成！');
-      getList();
-      return;
-    }
-    
-    if (progress.status === 'failed') {
-      restoreStatus.value = 'error';
-      restoreStatusText.value = '恢复失败';
-      restoreStepText.value = progress.errorMessage || '恢复过程中发生错误';
-      restoreProgressStatus.value = 'exception';
-      restoreRunning.value = false;
-      addRestoreLog('ERROR', '恢复失败: ' + (progress.errorMessage || '未知错误'));
-      return;
-    }
-    
-    // 继续轮询
-    pollTimer = setTimeout(pollRestoreProgress, 1000);
-  }).catch(() => {
-    // 轮询失败，继续尝试
-    if (restoreRunning.value) {
-      pollTimer = setTimeout(pollRestoreProgress, 2000);
-    }
-  });
-}
-
-function addRestoreLog(type, content) {
-  const now = new Date();
-  const time = now.toLocaleTimeString('zh-CN', { hour12: false });
-  restoreLogs.value.push({ time, type, content });
+  trendChartInstance.setOption({
+    tooltip: { trigger: 'axis' },
+    legend: { data: ['成功', '失败'], bottom: 0 },
+    grid: { left: '3%', right: '4%', bottom: '15%', top: '10%', containLabel: true },
+    xAxis: { type: 'category', data: dates },
+    yAxis: { type: 'value', minInterval: 1 },
+    series: [
+      { name: '成功', type: 'bar', data: successData, itemStyle: { color: '#67c23a' } },
+      { name: '失败', type: 'bar', data: failData, itemStyle: { color: '#f56c6c' } }
+    ]
+  })
   
-  // 自动滚动到底部
-  nextTick(() => {
-    if (logContainer.value) {
-      logContainer.value.scrollTop = logContainer.value.scrollHeight;
-    }
-  });
+  // 存储分布图
+  const storageByStrategy = {}
+  backupList.value.forEach(b => {
+    const key = b.strategyId ? getStrategyName(b.strategyId) : '手动备份'
+    storageByStrategy[key] = (storageByStrategy[key] || 0) + (b.fileSize || 0)
+  })
+  
+  storageChartInstance.setOption({
+    tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+    legend: { orient: 'vertical', right: '5%', top: 'center' },
+    series: [{
+      type: 'pie',
+      radius: ['40%', '70%'],
+      center: ['35%', '50%'],
+      data: Object.entries(storageByStrategy).map(([name, value]) => ({ name, value })),
+      label: { show: false }
+    }]
+  })
 }
 
-function getLogClass(log) {
-  return {
-    'log-info': log.type === 'INFO',
-    'log-error': log.type === 'ERROR',
-    'log-warn': log.type === 'WARN',
-    'log-success': log.type === 'SUCCESS',
-    'log-progress': log.type === 'PROGRESS'
-  };
+// 工具函数
+function getStrategyName(strategyId) {
+  const strategy = strategyList.value.find(s => s.strategyId === strategyId)
+  return strategy ? strategy.strategyName : '未知策略'
 }
 
-function cancelRestore() {
-  proxy.$modal.confirm('确定要取消恢复操作吗？已恢复的数据不会回滚。').then(() => {
-    if (pollTimer) {
-      clearTimeout(pollTimer);
-      pollTimer = null;
-    }
-    restoreRunning.value = false;
-    restoreStatus.value = 'error';
-    restoreStatusText.value = '已取消';
-    addRestoreLog('WARN', '用户取消了恢复操作');
-  }).catch(() => {});
+function getConnName(connId) {
+  const conn = connList.value.find(c => c.connId === connId)
+  return conn ? conn.connName : connId
 }
 
-function closeRestoreDialog() {
-  if (pollTimer) {
-    clearTimeout(pollTimer);
-    pollTimer = null;
-  }
-  restoreOpen.value = false;
-  resetRestoreStatus();
+function getBackupModeLabel(mode) {
+  const map = { full: '全量', incremental: '增量', differential: '差异' }
+  return map[mode] || mode
 }
 
-function getConnNameById(connId) {
-  const conn = connList.value.find(c => c.connId === connId);
-  return conn ? conn.connName : connId;
+function getBackupModeType(mode) {
+  const map = { full: 'primary', incremental: 'success', differential: 'warning' }
+  return map[mode] || ''
+}
+
+function getBackupLevelLabel(level) {
+  const map = { instance: '实例级', database: '数据库级', table: '表级' }
+  return map[level] || level
 }
 
 function formatFileSize(size) {
-  if (!size) return '0 B';
-  if (size < 1024) return size + ' B';
-  if (size < 1024 * 1024) return (size / 1024).toFixed(2) + ' KB';
-  if (size < 1024 * 1024 * 1024) return (size / (1024 * 1024)).toFixed(2) + ' MB';
-  return (size / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+  if (!size) return '0 B'
+  const units = ['B', 'KB', 'MB', 'GB', 'TB']
+  let i = 0
+  while (size >= 1024 && i < units.length - 1) {
+    size /= 1024
+    i++
+  }
+  return size.toFixed(2) + ' ' + units[i]
 }
 
-getList();
-getConnList();
+function formatStorage(bytes) {
+  return formatFileSize(bytes)
+}
+
+// 监听趋势周期变化
+watch(trendPeriod, () => {
+  updateCharts()
+})
+
+onMounted(() => {
+  getStrategyList()
+  getList()
+  getConnList()
+  nextTick(() => {
+    initCharts()
+  })
+  window.addEventListener('resize', () => {
+    trendChartInstance?.resize()
+    storageChartInstance?.resize()
+  })
+})
+
+onUnmounted(() => {
+  trendChartInstance?.dispose()
+  storageChartInstance?.dispose()
+})
 </script>
 
 <style scoped>
-.step-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid #e4e7ed;
+.backup-center {
+  padding: 20px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e7ed 100%);
+  min-height: calc(100vh - 84px);
 }
 
-.tree-header {
+/* 仪表盘区域 */
+.dashboard-section {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.header-title {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #e4e7ed;
+  font-size: 20px;
+  font-weight: 600;
+  color: #303133;
 }
 
-.tree-container {
-  max-height: 300px;
-  overflow-y: auto;
-  border: 1px solid #e4e7ed;
-  border-radius: 4px;
-  padding: 12px;
-}
-
-.tree-node {
-  display: flex;
-  align-items: center;
-  font-size: 14px;
-}
-
-.node-icon {
-  margin-right: 6px;
+.title-icon {
+  font-size: 24px;
   color: #409eff;
 }
 
-.selected-info {
-  margin-top: 12px;
-  padding: 12px;
-  background: #f5f7fa;
-  border-radius: 4px;
-  font-size: 14px;
+/* 统计卡片 */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 24px;
 }
 
-:deep(.el-step__title) {
-  font-size: 14px;
-}
-
-.form-tip {
-  margin-top: 4px;
-  font-size: 12px;
-  color: #909399;
+.stat-card {
   display: flex;
   align-items: center;
-  gap: 4px;
-}
-
-.form-tip .el-icon {
-  font-size: 12px;
-}
-
-/* 恢复对话框 */
-.restore-dialog {
+  padding: 20px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #fff 100%);
   border-radius: 12px;
-  overflow: hidden;
-}
-
-/* 恢复状态卡片 */
-.restore-status-cards {
-  margin-bottom: 30px;
-}
-
-.status-card {
-  background: linear-gradient(135deg, #f5f7fa 0%, #e4e7ed 100%);
-  border-radius: 12px;
-  padding: 24px;
-  text-align: center;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  position: relative;
-  overflow: hidden;
-}
-
-.status-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 4px;
-  background: transparent;
+  border: 1px solid #e4e7ed;
   transition: all 0.3s ease;
 }
 
-.status-card.running {
-  background: linear-gradient(135deg, #ecf5ff 0%, #d9ecff 100%);
-  border: 1px solid rgba(64, 158, 255, 0.2);
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
-.status-card.running::before {
-  background: linear-gradient(90deg, #409eff, #66b1ff);
+.stat-card.primary { border-left: 4px solid #409eff; }
+.stat-card.success { border-left: 4px solid #67c23a; }
+.stat-card.warning { border-left: 4px solid #e6a23c; }
+.stat-card.danger { border-left: 4px solid #f56c6c; }
+
+.stat-visual {
+  margin-right: 16px;
 }
 
-.status-card.success {
-  background: linear-gradient(135deg, #f0f9ff 0%, #e6f7ff 100%);
-  border: 1px solid rgba(103, 194, 58, 0.2);
-}
-
-.status-card.success::before {
-  background: linear-gradient(90deg, #67c23a, #85ce61);
-}
-
-.status-card.error {
-  background: linear-gradient(135deg, #fef0f0 0%, #fde2e2 100%);
-  border: 1px solid rgba(245, 108, 108, 0.2);
-}
-
-.status-card.error::before {
-  background: linear-gradient(90deg, #f56c6c, #f78989);
-}
-
-.status-card.info {
-  background: linear-gradient(135deg, #f5f7fa 0%, #e4e7ed 100%);
-  border: 1px solid rgba(220, 224, 229, 0.5);
-}
-
-.status-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-}
-
-.status-icon-container {
+.stat-ring {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 16px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.8);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  animation: pulse 2s infinite;
-}
-
-.status-card.running .status-icon-container {
   background: rgba(64, 158, 255, 0.1);
-}
-
-.status-card.success .status-icon-container {
-  background: rgba(103, 194, 58, 0.1);
-}
-
-.status-card.error .status-icon-container {
-  background: rgba(245, 108, 108, 0.1);
-}
-
-.status-icon {
   color: #409eff;
-  animation: spin 2s linear infinite;
+  font-size: 24px;
 }
 
-.status-card.running .status-icon {
-  color: #409eff;
-}
+.stat-card.success .stat-ring { background: rgba(103, 194, 58, 0.1); color: #67c23a; }
+.stat-card.warning .stat-ring { background: rgba(230, 162, 60, 0.1); color: #e6a23c; }
+.stat-card.danger .stat-ring { background: rgba(245, 108, 108, 0.1); color: #f56c6c; }
 
-.status-card.success .status-icon {
-  color: #67c23a;
-  animation: none;
-}
-
-.status-card.error .status-icon {
-  color: #f56c6c;
-  animation: none;
-}
-
-.status-card:not(.running) .status-icon {
-  animation: none;
-}
-
-.status-text {
-  font-size: 18px;
-  font-weight: 600;
-  color: #303133;
-  margin-bottom: 8px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-.status-desc {
-  font-size: 14px;
-  color: #606266;
-  line-height: 1.4;
-}
-
-.status-value {
-  font-size: 32px;
-  font-weight: 700;
-  color: #409eff;
-  margin-bottom: 8px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  animation: countUp 1s ease-out;
-}
-
-.status-card.success .status-value {
-  color: #67c23a;
-}
-
-.status-card.error .status-value {
-  color: #f56c6c;
-}
-
-.status-label {
-  font-size: 14px;
-  color: #909399;
-  margin-bottom: 16px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.progress-bar {
-  margin-top: 8px;
-  border-radius: 5px;
-  overflow: hidden;
-}
-
-:deep(.el-progress__bar) {
-  border-radius: 5px;
-  transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-:deep(.el-progress__bar__inner) {
-  border-radius: 5px;
-  background: linear-gradient(90deg, #409eff, #66b1ff);
-  transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.status-card.success :deep(.el-progress__bar__inner) {
-  background: linear-gradient(90deg, #67c23a, #85ce61);
-}
-
-.status-card.error :deep(.el-progress__bar__inner) {
-  background: linear-gradient(90deg, #f56c6c, #f78989);
-}
-
-/* 恢复日志 */
-.restore-log-section {
-  margin-top: 30px;
-}
-
-.restore-log-container {
-  height: 300px;
-  overflow-y: auto;
-  background: #1e1e1e;
-  border-radius: 8px;
-  padding: 20px;
-  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-  font-size: 13px;
-  line-height: 1.6;
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
-  position: relative;
-}
-
-.restore-log-container::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(circle at top right, rgba(64, 158, 255, 0.05), transparent 50%);
-  pointer-events: none;
-}
-
-.log-line {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 6px;
-  word-break: break-all;
-  animation: slideIn 0.3s ease-out;
-}
-
-.log-time {
-  color: #6c757d;
-  flex-shrink: 0;
-  min-width: 80px;
-  font-weight: 500;
-}
-
-.log-content {
+.stat-info {
   flex: 1;
 }
 
-.log-info .log-content {
-  color: #e8e8e8;
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #303133;
+  line-height: 1.2;
 }
 
-.log-error .log-content {
-  color: #f56c6c;
-  font-weight: 500;
+.stat-label {
+  font-size: 13px;
+  color: #909399;
+  margin-top: 4px;
 }
 
-.log-warn .log-content {
-  color: #e6a23c;
-  font-weight: 500;
+.stat-trend {
+  margin-top: 8px;
 }
 
-.log-success .log-content {
+.trend-up {
   color: #67c23a;
-  font-weight: 500;
+  font-weight: 600;
 }
 
-.log-progress .log-content {
-  color: #409eff;
-  font-weight: 500;
+.trend-label {
+  color: #909399;
+  font-size: 12px;
+  margin-left: 8px;
 }
 
-.log-empty {
-  height: 100%;
+.text-muted {
+  color: #909399;
+  font-size: 12px;
+}
+
+/* 图表区域 */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+}
+
+.chart-panel {
+  background: #f5f7fa;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.panel-title {
+  font-weight: 600;
+  color: #303133;
+}
+
+.chart-body {
+  height: 240px;
+}
+
+/* 策略区域 */
+.strategy-section {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.strategy-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.strategy-card {
+  background: #f5f7fa;
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.strategy-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.strategy-enabled {
+  border-color: #67c23a;
+  background: linear-gradient(135deg, #f0f9ff 0%, #fff 100%);
+}
+
+.strategy-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.strategy-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #6c757d;
+  background: #409eff;
+  color: #fff;
+  font-size: 20px;
 }
 
-/* 恢复范围 */
-.restore-scope {
-  margin: 20px 0;
+.strategy-name {
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 8px;
+}
+
+.strategy-meta {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.strategy-schedule {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #909399;
+  font-size: 13px;
+}
+
+.strategy-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e4e7ed;
+}
+
+.strategy-stats {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: #909399;
+}
+
+/* 备份记录区域 */
+.backup-section {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.section-filters {
+  display: flex;
+  gap: 12px;
+}
+
+.backup-file {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.file-icon {
+  color: #409eff;
+}
+
+.file-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.file-name {
+  font-weight: 500;
+  color: #303133;
+}
+
+.file-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.strategy-tag {
+  font-size: 12px;
+  color: #409eff;
+}
+
+.db-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #606266;
+}
+
+.file-size {
+  color: #606266;
+  font-weight: 500;
+}
+
+.backup-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-success {
+  color: #67c23a;
+}
+
+.status-error {
+  color: #f56c6c;
+}
+
+.time-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #909399;
+  font-size: 13px;
+}
+
+/* 快速备份对话框 */
+.quick-backup-step {
+  padding: 20px 0;
+}
+
+.strategy-select-hint {
+  color: #909399;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.strategy-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.strategy-option {
+  display: flex;
+  align-items: center;
+  gap: 16px;
   padding: 16px;
   background: #f5f7fa;
-  border-radius: 8px;
-  border-left: 4px solid #409eff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-/* 滚动条样式 */
-.restore-log-container::-webkit-scrollbar {
-  width: 8px;
-}
-
-.restore-log-container::-webkit-scrollbar-track {
-  background: #2d2d2d;
-  border-radius: 4px;
-}
-
-.restore-log-container::-webkit-scrollbar-thumb {
-  background: #4d4d4d;
-  border-radius: 4px;
+  border-radius: 12px;
+  cursor: pointer;
   transition: all 0.3s ease;
+  border: 2px solid transparent;
 }
 
-.restore-log-container::-webkit-scrollbar-thumb:hover {
-  background: #666;
+.strategy-option:hover {
+  background: #ecf5ff;
 }
 
-/* 动画效果 */
-@keyframes pulse {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgba(64, 158, 255, 0.4);
+.strategy-option.active {
+  border-color: #409eff;
+  background: #ecf5ff;
+}
+
+.option-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #409eff;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.manual-option .option-icon {
+  background: #67c23a;
+}
+
+.option-name {
+  font-weight: 600;
+  color: #303133;
+}
+
+.option-desc {
+  color: #909399;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+/* 策略详情 */
+.strategy-detail {
+  padding: 20px;
+}
+
+.detail-section {
+  margin-bottom: 24px;
+}
+
+.detail-title {
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.timeline-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* 响应式 */
+@media (max-width: 1200px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
-  50% {
-    box-shadow: 0 0 0 10px rgba(64, 158, 255, 0);
+  .charts-grid {
+    grid-template-columns: 1fr;
   }
 }
 
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes countUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-/* 响应式设计 */
 @media (max-width: 768px) {
-  .restore-status-cards {
-    margin-bottom: 20px;
+  .stats-grid {
+    grid-template-columns: 1fr;
   }
-  
-  .status-card {
-    margin-bottom: 16px;
-  }
-  
-  .restore-log-container {
-    height: 200px;
+  .strategy-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

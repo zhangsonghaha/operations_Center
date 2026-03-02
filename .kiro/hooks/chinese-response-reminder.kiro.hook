@@ -1,0 +1,15 @@
+{
+  "enabled": true,
+  "name": "中文回复提醒",
+  "description": "在每次用户提交问题后，提醒AI使用中文回复",
+  "version": "1",
+  "when": {
+    "type": "promptSubmit"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "请使用中文回复用户的问题。"
+  },
+  "workspaceFolderName": "RuoYi-Vue",
+  "shortName": "chinese-response-reminder"
+}

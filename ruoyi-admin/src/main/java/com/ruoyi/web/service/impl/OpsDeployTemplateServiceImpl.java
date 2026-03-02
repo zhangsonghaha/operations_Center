@@ -25,15 +25,19 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
 import java.io.InputStream;
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 import com.ruoyi.web.domain.OpsApp;
 import com.ruoyi.web.mapper.OpsAppMapper;
-import com.ruoyi.web.domain.OpsHost;
-import com.ruoyi.web.mapper.OpsDashboardMapper;
+import com.ruoyi.web.domain.OpsServer;
+import com.ruoyi.web.mapper.OpsServerMapper;
 import com.alibaba.fastjson2.JSONObject;
 
 import java.util.Map;
+
+import com.ruoyi.common.config.RuoYiConfig;
 
 /**
  * 部署模板Service业务层处理
@@ -62,7 +66,7 @@ public class OpsDeployTemplateServiceImpl implements IOpsDeployTemplateService
     private OpsAppMapper opsAppMapper;
     
     @Autowired
-    private OpsDashboardMapper opsDashboardMapper;
+    private OpsServerMapper opsServerMapper;
 
     /**
      * 查询部署模板
@@ -222,14 +226,19 @@ public class OpsDeployTemplateServiceImpl implements IOpsDeployTemplateService
         if (StringUtils.isEmpty(serverIds)) {
              throw new RuntimeException("App has no associated servers");
         }
-        Long hostId = Long.parseLong(serverIds.split(",")[0]);
-        OpsHost host = new OpsHost();
-        host.setHostId(hostId);
-        List<OpsHost> hosts = opsDashboardMapper.selectOpsHostList(host);
-        if (hosts.isEmpty()) {
-            throw new RuntimeException("Host not found");
+        Long serverId = Long.parseLong(serverIds.split(",")[0]);
+        
+        // Get server info from t_ops_server table
+        OpsServer server = opsServerMapper.selectOpsServerByServerId(serverId);
+        if (server == null) {
+            throw new RuntimeException("Server not found");
         }
-        OpsHost targetHost = hosts.get(0);
+        
+        // Get host IP (prefer public IP, fallback to private IP)
+        String hostIp = StringUtils.isNotEmpty(server.getPublicIp()) ? server.getPublicIp() : server.getPrivateIp();
+        if (StringUtils.isEmpty(hostIp)) {
+            throw new RuntimeException("Server has no IP address");
+        }
 
         // Find the template version ID corresponding to the current template version
         OpsDeployTemplateVersion query = new OpsDeployTemplateVersion();
@@ -251,11 +260,16 @@ public class OpsDeployTemplateServiceImpl implements IOpsDeployTemplateService
         // Execute remote deployment asynchronously
         new Thread(() -> {
             try {
-                executeRemoteDeploy(targetHost, app, template, record, params);
+                executeRemoteDeploy(server, hostIp, app, template, record, params);
             } catch (Exception e) {
                 record.setStatus("1"); // Failed
                 record.setErrorMsg(e.getMessage());
                 record.setEndTime(new Date());
+                // 组装一个简单的失败日志，前端也能看到错误信息
+                JSONObject result = new JSONObject();
+                result.put("exitCode", -1);
+                result.put("output", "Deployment exception: " + e.getMessage());
+                record.setJsonResult(result.toJSONString());
                 opsDeployRecordMapper.updateOpsDeployRecord(record);
             }
         }).start();
@@ -263,20 +277,18 @@ public class OpsDeployTemplateServiceImpl implements IOpsDeployTemplateService
         return record.getId();
     }
 
-    private void executeRemoteDeploy(OpsHost host, OpsApp app, OpsDeployTemplate template, OpsDeployRecord record, Map<String, String> params) throws Exception {
+    private void executeRemoteDeploy(OpsServer server, String hostIp, OpsApp app, OpsDeployTemplate template, OpsDeployRecord record, Map<String, String> params) throws Exception {
         JSch jsch = new JSch();
         Session session = null;
         ChannelExec channel = null;
         
         try {
-            // 1. Connect to server
-            // Note: OpsHost needs username/password fields, assuming they exist or using defaults/keys
-            // For this implementation, we'll assume standard 'root' and a placeholder password if not in DB
-            // In a real system, these should be securely stored in OpsHost
-            String user = "root"; 
-            String password = "password"; // Placeholder, should be from host.getPassword()
+            // 1. Connect to server using SSH credentials from t_ops_server
+            String user = StringUtils.isNotEmpty(server.getUsername()) ? server.getUsername() : "root";
+            String password = server.getPassword() != null ? server.getPassword() : "";
+            int sshPort = server.getServerPort() != null ? server.getServerPort() : 22;
             
-            session = jsch.getSession(user, host.getIpAddress(), 22);
+            session = jsch.getSession(user, hostIp, sshPort);
             session.setPassword(password);
             
             Properties config = new Properties();
@@ -284,12 +296,32 @@ public class OpsDeployTemplateServiceImpl implements IOpsDeployTemplateService
             session.setConfig(config);
             session.connect(10000);
             
-            // 2. Upload Start/Stop scripts
+            if (!session.isConnected()) {
+                throw new RuntimeException("SSH connection failed: session not connected to " + hostIp);
+            }
+            
+            // 2. Upload Start/Stop scripts and 应用包
             String deployPath = app.getDeployPath();
             if (StringUtils.isEmpty(deployPath)) {
                 deployPath = "/opt/apps/" + app.getAppName();
             }
 
+            // 将 /profile 开头的虚拟路径转换为本地真实路径
+            String localPackagePath = app.getPackagePath();
+            if (StringUtils.isNotEmpty(localPackagePath) && localPackagePath.startsWith("/profile")) {
+                // "/profile" 长度为 8
+                localPackagePath = RuoYiConfig.getProfile() + localPackagePath.substring(8);
+            }
+
+            // 先根据应用包本地路径计算远程包路径（deployPath + 文件名）
+            String remotePackagePath = "";
+            String packageFileName = null;
+            if (StringUtils.isNotEmpty(localPackagePath)) {
+                File pkgFile = new File(localPackagePath);
+                packageFileName = pkgFile.getName();
+                remotePackagePath = deployPath + "/" + packageFileName;
+            }
+            
             // Ensure directory exists
             ChannelExec mkdirChannel = (ChannelExec) session.openChannel("exec");
             mkdirChannel.setCommand("mkdir -p " + deployPath);
@@ -311,6 +343,19 @@ public class OpsDeployTemplateServiceImpl implements IOpsDeployTemplateService
                     sftp.put(is, deployPath + "/stop.sh");
                 }
             }
+
+            // 上传应用包到部署目录
+            if (StringUtils.isNotEmpty(localPackagePath) && packageFileName != null) {
+                File pkgFile = new File(localPackagePath);
+                if (pkgFile.exists() && pkgFile.isFile()) {
+                    try (InputStream is = new FileInputStream(pkgFile)) {
+                        sftp.put(is, remotePackagePath);
+                    }
+                } else {
+                    // 本地找不到包文件时，仍然继续后续流程，但在日志中体现
+                    // 这里不抛出异常，避免看不到远程执行日志
+                }
+            }
             sftp.disconnect();
 
             // Make scripts executable
@@ -324,19 +369,107 @@ public class OpsDeployTemplateServiceImpl implements IOpsDeployTemplateService
             String script = template.getScriptContent();
             // Replace placeholders
             script = script.replace("${app_name}", app.getAppName())
-                           .replace("${deploy_path}", app.getDeployPath() == null ? "/opt/apps" : app.getDeployPath())
-                           .replace("${package_path}", app.getPackagePath() == null ? "" : app.getPackagePath());
+                           .replace("${deploy_path}", deployPath)
+                           .replace("${package_path}", remotePackagePath == null ? "" : remotePackagePath);
             
             // Replace dynamic params
             if (params != null) {
                 for (Map.Entry<String, String> entry : params.entrySet()) {
                     script = script.replace("${" + entry.getKey() + "}", entry.getValue());
                 }
+                
+                // Add start script parameters to template script
+                if (params.containsKey("start_name")) {
+                    String startName = params.get("start_name");
+                    if (startName.contains(" ")) {
+                        // If start_name contains parameters, use it directly
+                        script = script.replace("sh start.sh", startName);
+                        script = script.replace("./start.sh", startName);
+                    } else {
+                        // If start_name is just the script name, use it without parameters
+                        script = script.replace("sh start.sh", "sh " + startName);
+                        script = script.replace("./start.sh", "./" + startName);
+                    }
+                }
+            }
+            
+            // 4. Execute start script with parameters if start.sh exists
+            if (StringUtils.isNotEmpty(app.getStartScript())) {
+                // Get start script command from params or use default
+                String startScriptCommand = "cd " + deployPath + " && sh start.sh";
+                
+                // Check if params contains start script parameters
+                if (params != null && params.containsKey("start_name")) {
+                    String startName = params.get("start_name");
+                    if (startName.contains(" ")) {
+                        // If start_name contains parameters, use it directly
+                        startScriptCommand = "cd " + deployPath + " && " + startName;
+                    } else {
+                        // If start_name is just the script name, use it without parameters
+                        startScriptCommand = "cd " + deployPath + " && sh " + startName;
+                    }
+                }
+                
+                ChannelExec startChannel = (ChannelExec) session.openChannel("exec");
+                startChannel.setCommand(startScriptCommand);
+                
+                InputStream startIn = startChannel.getInputStream();
+                InputStream startErr = startChannel.getErrStream();
+                
+                startChannel.connect();
+                
+                // Read start script output
+                StringBuilder startOutput = new StringBuilder();
+                byte[] tmp = new byte[1024];
+                while (true) {
+                    while (startIn.available() > 0) {
+                        int i = startIn.read(tmp, 0, 1024);
+                        if (i < 0) break;
+                        startOutput.append(new String(tmp, 0, i));
+                    }
+                    while (startErr.available() > 0) {
+                        int i = startErr.read(tmp, 0, 1024);
+                        if (i < 0) break;
+                        startOutput.append(new String(tmp, 0, i));
+                    }
+                    if (startChannel.isClosed()) {
+                        if (startIn.available() > 0) continue;
+                        break;
+                    }
+                    try { Thread.sleep(1000); } catch (Exception ee) {}
+                }
+                
+                startChannel.disconnect();
+                
+                // Add start script output to overall output
+                script = script + "\n# Start script output:\n" + startOutput.toString();
             }
                            
-            // 3. Execute script
+            // 5. Execute deployment template script
+            // Write script to remote server and execute it
+            String remoteScriptPath = deployPath + "/deploy.sh";
+            
+            // Reconnect SFTP to upload script
+            ChannelSftp sftpDeploy = (ChannelSftp) session.openChannel("sftp");
+            sftpDeploy.connect();
+            
+            // Upload script to remote server
+            try (InputStream scriptIs = new ByteArrayInputStream(script.getBytes(StandardCharsets.UTF_8))) {
+                sftpDeploy.put(scriptIs, remoteScriptPath);
+            }
+            
+            sftpDeploy.disconnect();
+            
+            // Make script executable
+            ChannelExec chmodScriptChannel = (ChannelExec) session.openChannel("exec");
+            chmodScriptChannel.setCommand("chmod +x " + remoteScriptPath);
+            chmodScriptChannel.connect();
+            while (!chmodScriptChannel.isClosed()) { Thread.sleep(100); }
+            chmodScriptChannel.disconnect();
+            
+            // Execute script
             channel = (ChannelExec) session.openChannel("exec");
-            channel.setCommand(script);
+            channel.setCommand("cd " + deployPath + " && bash " + remoteScriptPath);
             
             InputStream in = channel.getInputStream();
             InputStream err = channel.getErrStream();

@@ -73,8 +73,14 @@
 	
 	<!-- 系统模块日志级别控制  -->
 	<logger name="com.ruoyi" level="info" />
+	<!-- 部署日志 Mapper 不显示详细 SQL，避免 explain 插件解析超长内容报错 -->
+	<logger name="com.ruoyi.web.mapper.OpsDeployLogMapper" level="warn" />
 	<!-- Spring日志级别控制  -->
 	<logger name="org.springframework" level="warn" />
+	<!-- MyBatis日志级别控制 - 其他 Mapper 可以正常显示 SQL -->
+	<logger name="org.apache.ibatis" level="warn" />
+	<logger name="java.sql" level="warn" />
+	<logger name="org.mybatis" level="warn" />
 
 	<root level="info">
 		<appender-ref ref="console" />

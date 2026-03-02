@@ -107,6 +107,9 @@ public class OpsReleaseApply extends BaseEntity
     @Excel(name = "Process Instance ID")
     private String processInstanceId;
 
+    /** Deployment Parameters (JSON) */
+    private String deployParams;
+
     public void setId(Long id) 
     {
         this.id = id;
@@ -337,6 +340,16 @@ public class OpsReleaseApply extends BaseEntity
         return processInstanceId;
     }
 
+    public void setDeployParams(String deployParams) 
+    {
+        this.deployParams = deployParams;
+    }
+
+    public String getDeployParams() 
+    {
+        return deployParams;
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE)
@@ -362,6 +375,7 @@ public class OpsReleaseApply extends BaseEntity
             .append("totalSteps", getTotalSteps())
             .append("approvalStatus", getApprovalStatus())
             .append("processInstanceId", getProcessInstanceId())
+            .append("deployParams", getDeployParams())
             .append("createBy", getCreateBy())
             .append("createTime", getCreateTime())
             .append("updateBy", getUpdateBy())

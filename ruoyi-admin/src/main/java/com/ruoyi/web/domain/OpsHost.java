@@ -23,6 +23,12 @@ public class OpsHost extends BaseEntity
     /** 状态（0正常 1停用） */
     private String status;
 
+    /** SSH用户名 */
+    private String sshUsername;
+
+    /** SSH密码 */
+    private String sshPassword;
+
     /** CPU使用率 */
     private Double cpuUsage;
 
@@ -65,9 +71,25 @@ public class OpsHost extends BaseEntity
     {
         return status;
     }
-    public void setCpuUsage(Double cpuUsage) 
+    
+    public void setSshUsername(String sshUsername) 
     {
-        this.cpuUsage = cpuUsage;
+        this.sshUsername = sshUsername;
+    }
+
+    public String getSshUsername() 
+    {
+        return sshUsername;
+    }
+    
+    public void setSshPassword(String sshPassword) 
+    {
+        this.sshPassword = sshPassword;
+    }
+
+    public String getSshPassword() 
+    {
+        return sshPassword;
     }
 
     public Double getCpuUsage() 

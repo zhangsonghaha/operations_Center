@@ -140,6 +140,7 @@ public class SysDbBackupStrategyServiceImpl implements ISysDbBackupStrategyServi
             // 保存备份记录
             SysDbBackup backup = new SysDbBackup();
             backup.setConnId(strategy.getConnId());
+            backup.setStrategyId(strategyId);
             backup.setFileName(backupFile.getName());
             backup.setFilePath(backupFile.getAbsolutePath());
             backup.setBackupType("1"); // 自动备份

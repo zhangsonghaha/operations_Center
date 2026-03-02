@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.web.mapper.DockerContainerMapper">
+    
+    <resultMap type="DockerContainer" id="DockerContainerResult">
+        <result property="containerId"        column="container_id"         />
+        <result property="containerDockerId"  column="container_docker_id"  />
+        <result property="containerName"      column="container_name"       />
+        <result property="imageName"          column="image_name"           />
+        <result property="imageTag"           column="image_tag"            />
+        <result property="serverId"           column="server_id"            />
+        <result property="serverName"         column="server_name"          />
+        <result property="portMappings"       column="port_mappings"        />
+        <result property="envVars"            column="env_vars"             />
+        <result property="volumeMounts"       column="volume_mounts"        />
+        <result property="cpuLimit"           column="cpu_limit"            />
+        <result property="memoryLimit"        column="memory_limit"         />
+        <result property="restartPolicy"      column="restart_policy"       />
+        <result property="networkMode"        column="network_mode"         />
+        <result property="containerStatus"    column="container_status"     />
+        <result property="deployLogId"        column="deploy_log_id"        />
+        <result property="healthCheckUrl"     column="health_check_url"     />
+        <result property="healthStatus"       column="health_status"        />
+        <result property="lastHealthCheck"    column="last_health_check"    />
+        <result property="createBy"           column="create_by"            />
+        <result property="createTime"         column="create_time"          />
+        <result property="updateBy"           column="update_by"            />
+        <result property="updateTime"         column="update_time"          />
+        <result property="remark"             column="remark"               />
+    </resultMap>
+
+    <sql id="selectDockerContainerVo">
+        select container_id, container_docker_id, container_name, image_name, image_tag,
+               server_id, server_name, port_mappings, env_vars, volume_mounts,
+               cpu_limit, memory_limit, restart_policy, network_mode, container_status,
+               deploy_log_id, health_check_url, health_status, last_health_check,
+               create_by, create_time, update_by, update_time, remark
+        from t_docker_container
+    </sql>
+
+    <select id="selectDockerContainerList" parameterType="DockerContainer" resultMap="DockerContainerResult">
+        <include refid="selectDockerContainerVo"/>
+        <where>  
+            <if test="containerName != null and containerName != ''">
+                and container_name like concat('%', #{containerName}, '%')
+            </if>
+            <if test="imageName != null and imageName != ''">
+                and image_name like concat('%', #{imageName}, '%')
+            </if>
+            <if test="imageTag != null and imageTag != ''">
+                and image_tag = #{imageTag}
+            </if>
+            <if test="serverId != null">
+                and server_id = #{serverId}
+            </if>
+            <if test="serverName != null and serverName != ''">
+                and server_name like concat('%', #{serverName}, '%')
+            </if>
+            <if test="containerStatus != null and containerStatus != ''">
+                and container_status = #{containerStatus}
+            </if>
+            <if test="healthStatus != null and healthStatus != ''">
+                and health_status = #{healthStatus}
+            </if>
+        </where>
+        order by create_time desc
+    </select>
+    
+    <select id="selectDockerContainerById" parameterType="Long" resultMap="DockerContainerResult">
+        <include refid="selectDockerContainerVo"/>
+        where container_id = #{containerId}
+    </select>
+
+    <select id="selectDockerContainerByNameAndServer" resultMap="DockerContainerResult">
+        <include refid="selectDockerContainerVo"/>
+        where container_name = #{containerName} and server_id = #{serverId}
+    </select>
+
+    <select id="selectDockerContainerByDockerId" parameterType="String" resultMap="DockerContainerResult">
+        <include refid="selectDockerContainerVo"/>
+        where container_docker_id = #{containerDockerId}
+    </select>
+
+    <select id="selectDockerContainerListByServerId" parameterType="Long" resultMap="DockerContainerResult">
+        <include refid="selectDockerContainerVo"/>
+        where server_id = #{serverId}
+        order by create_time desc
+    </select>
+        
+    <insert id="insertDockerContainer" parameterType="DockerContainer" useGeneratedKeys="true" keyProperty="containerId">
+        insert into t_docker_container
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="containerDockerId != null">container_docker_id,</if>
+            <if test="containerName != null and containerName != ''">container_name,</if>
+            <if test="imageName != null and imageName != ''">image_name,</if>
+            <if test="imageTag != null">image_tag,</if>
+            <if test="serverId != null">server_id,</if>
+            <if test="serverName != null">server_name,</if>
+            <if test="portMappings != null">port_mappings,</if>
+            <if test="envVars != null">env_vars,</if>
+            <if test="volumeMounts != null">volume_mounts,</if>
+            <if test="cpuLimit != null">cpu_limit,</if>
+            <if test="memoryLimit != null">memory_limit,</if>
+            <if test="restartPolicy != null">restart_policy,</if>
+            <if test="networkMode != null">network_mode,</if>
+            <if test="containerStatus != null">container_status,</if>
+            <if test="deployLogId != null">deploy_log_id,</if>
+            <if test="healthCheckUrl != null">health_check_url,</if>
+            <if test="healthStatus != null">health_status,</if>
+            <if test="lastHealthCheck != null">last_health_check,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="containerDockerId != null">#{containerDockerId},</if>
+            <if test="containerName != null and containerName != ''">#{containerName},</if>
+            <if test="imageName != null and imageName != ''">#{imageName},</if>
+            <if test="imageTag != null">#{imageTag},</if>
+            <if test="serverId != null">#{serverId},</if>
+            <if test="serverName != null">#{serverName},</if>
+            <if test="portMappings != null">#{portMappings},</if>
+            <if test="envVars != null">#{envVars},</if>
+            <if test="volumeMounts != null">#{volumeMounts},</if>
+            <if test="cpuLimit != null">#{cpuLimit},</if>
+            <if test="memoryLimit != null">#{memoryLimit},</if>
+            <if test="restartPolicy != null">#{restartPolicy},</if>
+            <if test="networkMode != null">#{networkMode},</if>
+            <if test="containerStatus != null">#{containerStatus},</if>
+            <if test="deployLogId != null">#{deployLogId},</if>
+            <if test="healthCheckUrl != null">#{healthCheckUrl},</if>
+            <if test="healthStatus != null">#{healthStatus},</if>
+            <if test="lastHealthCheck != null">#{lastHealthCheck},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updateDockerContainer" parameterType="DockerContainer">
+        update t_docker_container
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="containerDockerId != null">container_docker_id = #{containerDockerId},</if>
+            <if test="containerName != null and containerName != ''">container_name = #{containerName},</if>
+            <if test="imageName != null and imageName != ''">image_name = #{imageName},</if>
+            <if test="imageTag != null">image_tag = #{imageTag},</if>
+            <if test="serverId != null">server_id = #{serverId},</if>
+            <if test="serverName != null">server_name = #{serverName},</if>
+            <if test="portMappings != null">port_mappings = #{portMappings},</if>
+            <if test="envVars != null">env_vars = #{envVars},</if>
+            <if test="volumeMounts != null">volume_mounts = #{volumeMounts},</if>
+            <if test="cpuLimit != null">cpu_limit = #{cpuLimit},</if>
+            <if test="memoryLimit != null">memory_limit = #{memoryLimit},</if>
+            <if test="restartPolicy != null">restart_policy = #{restartPolicy},</if>
+            <if test="networkMode != null">network_mode = #{networkMode},</if>
+            <if test="containerStatus != null">container_status = #{containerStatus},</if>
+            <if test="deployLogId != null">deploy_log_id = #{deployLogId},</if>
+            <if test="healthCheckUrl != null">health_check_url = #{healthCheckUrl},</if>
+            <if test="healthStatus != null">health_status = #{healthStatus},</if>
+            <if test="lastHealthCheck != null">last_health_check = #{lastHealthCheck},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where container_id = #{containerId}
+    </update>
+
+    <update id="updateContainerStatus">
+        update t_docker_container
+        set container_status = #{containerStatus},
+            update_time = now()
+        where container_id = #{containerId}
+    </update>
+
+    <update id="updateContainerHealthStatus">
+        update t_docker_container
+        set health_status = #{healthStatus},
+            last_health_check = #{lastHealthCheck},
+            update_time = now()
+        where container_id = #{containerId}
+    </update>
+
+    <delete id="deleteDockerContainerById" parameterType="Long">
+        delete from t_docker_container where container_id = #{containerId}
+    </delete>
+
+    <delete id="deleteDockerContainerByIds" parameterType="Long">
+        delete from t_docker_container where container_id in
+        <foreach item="containerId" collection="array" open="(" separator="," close=")">
+            #{containerId}
+        </foreach>
+    </delete>
+
+</mapper>

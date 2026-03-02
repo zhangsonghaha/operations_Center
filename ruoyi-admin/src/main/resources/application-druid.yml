@@ -51,9 +51,9 @@ spring:
                 login-password: 123456
             filter:
                 stat:
-                    enabled: true
-                    # 慢SQL记录
-                    log-slow-sql: true
+                    # 必须禁用 stat 过滤器，否则 mysql-explain 插件会拦截所有 SQL
+                    enabled: false
+                    log-slow-sql: false
                     slow-sql-millis: 1000
                     merge-sql: true
                 wall:

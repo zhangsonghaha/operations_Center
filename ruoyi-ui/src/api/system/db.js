@@ -275,11 +275,11 @@ export function backup(connId) {
 }
 
 // 执行高级备份
-export function backupWithOptions(connId, dbType, backupMode, backupLevel, targetName, storageType, compressEnabled) {
+export function backupWithOptions(data) {
   return request({
     url: '/system/db/backup/backup-advanced',
     method: 'post',
-    data: { connId, dbType, backupMode, backupLevel, targetName, storageType, compressEnabled }
+    data: data
   })
 }
 
@@ -309,10 +309,11 @@ export function getRestoreProgress(taskId) {
 }
 
 // 清理过期备份
-export function cleanExpiredBackups() {
+export function cleanExpired(data) {
   return request({
     url: '/system/db/backup/clean-expired',
-    method: 'post'
+    method: 'post',
+    data: data
   })
 }
 
@@ -321,6 +322,59 @@ export function delBackup(backupId) {
   return request({
     url: '/system/db/backup/' + backupId,
     method: 'delete'
+  })
+}
+
+// --- 备份策略 ---
+
+// 查询策略列表
+export function listStrategy(query) {
+  return request({
+    url: '/system/db/backupStrategy/list',
+    method: 'get',
+    params: query
+  })
+}
+
+// 获取策略详情
+export function getStrategy(strategyId) {
+  return request({
+    url: '/system/db/backupStrategy/' + strategyId,
+    method: 'get'
+  })
+}
+
+// 新增策略
+export function addStrategy(data) {
+  return request({
+    url: '/system/db/backupStrategy',
+    method: 'post',
+    data: data
+  })
+}
+
+// 修改策略
+export function updateStrategy(data) {
+  return request({
+    url: '/system/db/backupStrategy',
+    method: 'put',
+    data: data
+  })
+}
+
+// 删除策略
+export function delStrategy(strategyId) {
+  return request({
+    url: '/system/db/backupStrategy/' + strategyId,
+    method: 'delete'
+  })
+}
+
+// 执行策略备份
+export function executeStrategy(strategyId) {
+  return request({
+    url: '/system/db/backupStrategy/execute/' + strategyId,
+    method: 'post'
   })
 }
 
@@ -351,58 +405,5 @@ export function exportLog(query) {
     method: 'get',
     params: query,
     responseType: 'blob'
-  })
-}
-
-// --- 备份策略 ---
-
-// 查询备份策略列表
-export function listStrategy(query) {
-  return request({
-    url: '/system/db/backupStrategy/list',
-    method: 'get',
-    params: query
-  })
-}
-
-// 查询备份策略详细
-export function getStrategy(strategyId) {
-  return request({
-    url: '/system/db/backupStrategy/' + strategyId,
-    method: 'get'
-  })
-}
-
-// 新增备份策略
-export function addStrategy(data) {
-  return request({
-    url: '/system/db/backupStrategy',
-    method: 'post',
-    data: data
-  })
-}
-
-// 修改备份策略
-export function updateStrategy(data) {
-  return request({
-    url: '/system/db/backupStrategy',
-    method: 'put',
-    data: data
-  })
-}
-
-// 删除备份策略
-export function delStrategy(strategyId) {
-  return request({
-    url: '/system/db/backupStrategy/' + strategyId,
-    method: 'delete'
-  })
-}
-
-// 立即执行策略备份
-export function executeStrategy(strategyId) {
-  return request({
-    url: '/system/db/backupStrategy/execute/' + strategyId,
-    method: 'post'
   })
 }

@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.web.mapper.DockerTemplateMapper">
+    
+    <resultMap type="DockerTemplate" id="DockerTemplateResult">
+        <result property="templateId"          column="template_id"           />
+        <result property="templateName"        column="template_name"         />
+        <result property="templateType"        column="template_type"         />
+        <result property="imageName"           column="image_name"            />
+        <result property="imageTag"            column="image_tag"             />
+        <result property="defaultPorts"        column="default_ports"         />
+        <result property="defaultEnvVars"      column="default_env_vars"      />
+        <result property="defaultVolumes"      column="default_volumes"       />
+        <result property="defaultCpuLimit"     column="default_cpu_limit"     />
+        <result property="defaultMemoryLimit"  column="default_memory_limit"  />
+        <result property="description"         column="description"           />
+        <result property="isSystem"            column="is_system"             />
+        <result property="sortOrder"           column="sort_order"            />
+        <result property="status"              column="status"                />
+        <result property="createBy"            column="create_by"             />
+        <result property="createTime"          column="create_time"           />
+        <result property="updateBy"            column="update_by"             />
+        <result property="updateTime"          column="update_time"           />
+        <result property="remark"              column="remark"                />
+    </resultMap>
+
+    <sql id="selectDockerTemplateVo">
+        select template_id, template_name, template_type, image_name, image_tag,
+               default_ports, default_env_vars, default_volumes, default_cpu_limit, default_memory_limit,
+               description, is_system, sort_order, status,
+               create_by, create_time, update_by, update_time, remark
+        from t_docker_template
+    </sql>
+
+    <select id="selectDockerTemplateList" parameterType="DockerTemplate" resultMap="DockerTemplateResult">
+        <include refid="selectDockerTemplateVo"/>
+        <where>  
+            <if test="templateName != null and templateName != ''">
+                and template_name like concat('%', #{templateName}, '%')
+            </if>
+            <if test="templateType != null and templateType != ''">
+                and template_type = #{templateType}
+            </if>
+            <if test="imageName != null and imageName != ''">
+                and image_name like concat('%', #{imageName}, '%')
+            </if>
+            <if test="status != null and status != ''">
+                and status = #{status}
+            </if>
+            <if test="isSystem != null and isSystem != ''">
+                and is_system = #{isSystem}
+            </if>
+        </where>
+        order by sort_order asc, create_time desc
+    </select>
+    
+    <select id="selectDockerTemplateById" parameterType="Long" resultMap="DockerTemplateResult">
+        <include refid="selectDockerTemplateVo"/>
+        where template_id = #{templateId}
+    </select>
+
+    <select id="selectDockerTemplateByName" parameterType="String" resultMap="DockerTemplateResult">
+        <include refid="selectDockerTemplateVo"/>
+        where template_name = #{templateName}
+    </select>
+
+    <select id="selectDockerTemplateListByType" parameterType="String" resultMap="DockerTemplateResult">
+        <include refid="selectDockerTemplateVo"/>
+        where template_type = #{templateType} and status = '0'
+        order by sort_order asc
+    </select>
+
+    <select id="selectEnabledDockerTemplateList" resultMap="DockerTemplateResult">
+        <include refid="selectDockerTemplateVo"/>
+        where status = '0'
+        order by sort_order asc, create_time desc
+    </select>
+
+    <select id="checkTemplateNameUnique" resultType="int">
+        select count(1) from t_docker_template
+        where template_name = #{templateName}
+        <if test="templateId != null">
+            and template_id != #{templateId}
+        </if>
+    </select>
+        
+    <insert id="insertDockerTemplate" parameterType="DockerTemplate" useGeneratedKeys="true" keyProperty="templateId">
+        insert into t_docker_template
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="templateName != null and templateName != ''">template_name,</if>
+            <if test="templateType != null and templateType != ''">template_type,</if>
+            <if test="imageName != null and imageName != ''">image_name,</if>
+            <if test="imageTag != null">image_tag,</if>
+            <if test="defaultPorts != null">default_ports,</if>
+            <if test="defaultEnvVars != null">default_env_vars,</if>
+            <if test="defaultVolumes != null">default_volumes,</if>
+            <if test="defaultCpuLimit != null">default_cpu_limit,</if>
+            <if test="defaultMemoryLimit != null">default_memory_limit,</if>
+            <if test="description != null">description,</if>
+            <if test="isSystem != null">is_system,</if>
+            <if test="sortOrder != null">sort_order,</if>
+            <if test="status != null">status,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="templateName != null and templateName != ''">#{templateName},</if>
+            <if test="templateType != null and templateType != ''">#{templateType},</if>
+            <if test="imageName != null and imageName != ''">#{imageName},</if>
+            <if test="imageTag != null">#{imageTag},</if>
+            <if test="defaultPorts != null">#{defaultPorts},</if>
+            <if test="defaultEnvVars != null">#{defaultEnvVars},</if>
+            <if test="defaultVolumes != null">#{defaultVolumes},</if>
+            <if test="defaultCpuLimit != null">#{defaultCpuLimit},</if>
+            <if test="defaultMemoryLimit != null">#{defaultMemoryLimit},</if>
+            <if test="description != null">#{description},</if>
+            <if test="isSystem != null">#{isSystem},</if>
+            <if test="sortOrder != null">#{sortOrder},</if>
+            <if test="status != null">#{status},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updateDockerTemplate" parameterType="DockerTemplate">
+        update t_docker_template
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="templateName != null and templateName != ''">template_name = #{templateName},</if>
+            <if test="templateType != null and templateType != ''">template_type = #{templateType},</if>
+            <if test="imageName != null and imageName != ''">image_name = #{imageName},</if>
+            <if test="imageTag != null">image_tag = #{imageTag},</if>
+            <if test="defaultPorts != null">default_ports = #{defaultPorts},</if>
+            <if test="defaultEnvVars != null">default_env_vars = #{defaultEnvVars},</if>
+            <if test="defaultVolumes != null">default_volumes = #{defaultVolumes},</if>
+            <if test="defaultCpuLimit != null">default_cpu_limit = #{defaultCpuLimit},</if>
+            <if test="defaultMemoryLimit != null">default_memory_limit = #{defaultMemoryLimit},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="isSystem != null">is_system = #{isSystem},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where template_id = #{templateId}
+    </update>
+
+    <delete id="deleteDockerTemplateById" parameterType="Long">
+        delete from t_docker_template where template_id = #{templateId}
+    </delete>
+
+    <delete id="deleteDockerTemplateByIds" parameterType="Long">
+        delete from t_docker_template where template_id in
+        <foreach item="templateId" collection="array" open="(" separator="," close=")">
+            #{templateId}
+        </foreach>
+    </delete>
+
+</mapper>

@@ -868,6 +868,7 @@ function submitDeploy() {
     description: deployForm.description,
     environment: deployForm.environment,
     scriptContent: finalScript,
+    deployParams: JSON.stringify(deployForm.params),
     status: "1" // 待审批
   };
   

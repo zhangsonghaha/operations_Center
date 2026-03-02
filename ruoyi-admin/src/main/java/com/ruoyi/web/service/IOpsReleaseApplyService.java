@@ -71,9 +71,9 @@ public interface IOpsReleaseApplyService
      * Execute Release
      * 
      * @param id Release Apply ID
-     * @return Result
+     * @return Deployment Record ID
      */
-    public void executeRelease(Long id);
+    public Long executeRelease(Long id);
 
     /**
      * Batch Delete Release Apply

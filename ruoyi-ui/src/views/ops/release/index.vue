@@ -257,22 +257,272 @@
         </div>
       </template>
     </el-dialog>
+
+    <!-- 部署配置确认对话框 -->
+    <el-dialog 
+      title="部署配置确认" 
+      v-model="deployConfirmOpen" 
+      width="950px" 
+      append-to-body 
+      destroy-on-close
+      custom-class="deploy-confirm-dialog"
+      :before-close="() => false"
+    >
+      <div v-if="currentApp" class="deploy-confirm-content">
+        <!-- 应用信息卡片 -->
+        <el-card class="mb-6 deploy-card">
+          <template #header>
+            <div class="card-header">
+              <el-avatar :size="32" class="avatar">
+                <el-icon class="icon"><i-ep-apple /></el-icon>
+              </el-avatar>
+              <div class="header-text">
+                <h3 class="title">应用信息</h3>
+                <p class="subtitle">查看应用基本信息和发布详情</p>
+              </div>
+            </div>
+          </template>
+          <div class="app-info-grid">
+            <div class="info-item">
+              <span class="info-label">应用名称</span>
+              <span class="info-value">{{ currentApp.appName }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">发布标题</span>
+              <span class="info-value">{{ currentRelease.title }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">版本号</span>
+              <span class="info-value version">{{ currentRelease.version }}</span>
+            </div>
+          </div>
+        </el-card>
+        
+        <!-- 部署配置卡片 -->
+        <el-card class="mb-6 deploy-card">
+          <template #header>
+            <div class="card-header">
+              <el-avatar :size="32" class="avatar bg-indigo">
+                <el-icon class="icon"><i-ep-setting /></el-icon>
+              </el-avatar>
+              <div class="header-text">
+                <h3 class="title">部署配置</h3>
+                <p class="subtitle">检查部署路径和相关配置参数</p>
+              </div>
+            </div>
+          </template>
+          <div class="config-grid">
+            <div class="config-item">
+              <div class="config-icon">
+                <el-icon><i-ep-folder /></el-icon>
+              </div>
+              <div class="config-content">
+                <span class="config-label">部署路径</span>
+                <span class="config-value">{{ currentApp.deployPath || '-' }}</span>
+              </div>
+            </div>
+            <div class="config-item">
+              <div class="config-icon">
+                <el-icon><i-ep-data-line /></el-icon>
+              </div>
+              <div class="config-content">
+                <span class="config-label">监控端口</span>
+                <span class="config-value">{{ currentApp.monitorPorts || '-' }}</span>
+              </div>
+            </div>
+            <div class="config-item">
+              <div class="config-icon">
+                <el-icon><i-ep-check-circle /></el-icon>
+              </div>
+              <div class="config-content">
+                <span class="config-label">健康检查</span>
+                <span class="config-value">{{ currentApp.healthCheckUrl || '-' }}</span>
+              </div>
+            </div>
+            <div class="config-item">
+              <div class="config-icon">
+                <el-icon><i-ep-timer /></el-icon>
+              </div>
+              <div class="config-content">
+                <span class="config-label">超时时间</span>
+                <span class="config-value">{{ currentApp.deployTimeout || 60 }} 秒</span>
+              </div>
+            </div>
+            <div class="config-item">
+              <div class="config-icon">
+                <el-icon><i-ep-refresh /></el-icon>
+              </div>
+              <div class="config-content">
+                <span class="config-label">重试次数</span>
+                <span class="config-value">{{ currentApp.retryCount || 0 }} 次</span>
+              </div>
+            </div>
+          </div>
+        </el-card>
+        
+        <!-- 关联服务器卡片 -->
+        <el-card class="mb-6 deploy-card">
+          <template #header>
+            <div class="card-header">
+              <el-avatar :size="32" class="avatar bg-emerald">
+                <el-icon class="icon"><i-ep-server /></el-icon>
+              </el-avatar>
+              <div class="header-text">
+                <h3 class="title">关联服务器</h3>
+                <p class="subtitle">查看部署目标服务器</p>
+              </div>
+            </div>
+          </template>
+          <div v-if="currentApp.serverIds" class="server-list">
+            <div 
+              v-for="sid in currentApp.serverIds.split(',')" 
+              :key="sid" 
+              class="server-item"
+            >
+              <div class="server-icon">
+                <el-icon><i-ep-monitor /></el-icon>
+              </div>
+              <div class="server-info">
+                <div class="server-name">{{ getServerName(sid) }}</div>
+                <div class="server-id">服务器 ID: {{ sid }}</div>
+              </div>
+              <div class="server-status">
+                <el-tag size="small" type="success">可用</el-tag>
+              </div>
+            </div>
+          </div>
+          <div v-else class="empty-state">
+            <el-empty 
+              description="
+                <span class='empty-text'>未配置服务器</span>
+              " 
+            >
+              <template #image>
+                <div class="empty-icon">
+                  <el-icon><i-ep-server /></el-icon>
+                </div>
+              </template>
+            </el-empty>
+          </div>
+        </el-card>
+        
+        <!-- 启动脚本卡片 -->
+        <el-card class="deploy-card">
+          <template #header>
+            <div class="card-header">
+              <el-avatar :size="32" class="avatar bg-amber">
+                <el-icon class="icon"><i-ep-code /></el-icon>
+              </el-avatar>
+              <div class="header-text">
+                <h3 class="title">启动脚本</h3>
+                <p class="subtitle">查看应用启动脚本内容</p>
+              </div>
+            </div>
+          </template>
+          <div v-if="currentApp.startScript" class="script-container">
+            <div class="script-header">
+              <span class="script-name">start.sh</span>
+              <span class="script-length">{{ currentApp.startScript.length }} 字符</span>
+            </div>
+            <div class="script-content">
+              <pre>{{ currentApp.startScript }}</pre>
+            </div>
+          </div>
+          <div v-else class="empty-state">
+            <el-empty 
+              description="
+                <span class='empty-text'>未配置启动脚本</span>
+              " 
+            >
+              <template #image>
+                <div class="empty-icon">
+                  <el-icon><i-ep-code /></el-icon>
+                </div>
+              </template>
+            </el-empty>
+          </div>
+        </el-card>
+      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button 
+            @click="deployConfirmOpen = false" 
+            class="cancel-button"
+          >
+            <el-icon class="mr-1"><i-ep-close /></el-icon>
+            取消
+          </el-button>
+          <el-button 
+            type="primary" 
+            @click="confirmDeploy"
+            class="deploy-button"
+          >
+            <el-icon class="mr-1"><i-ep-check /></el-icon>
+            确认部署
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <!-- 部署执行日志对话框 -->
+    <el-dialog
+      title="部署执行日志"
+      v-model="deployLogVisible"
+      width="800px"
+      append-to-body
+      destroy-on-close
+    >
+      <div style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <span style="margin-right: 12px;">记录ID：{{ deployLog.recordId || '-' }}</span>
+          <span>状态：
+            <el-tag v-if="deployLog.status === '0'" type="warning" size="small">执行中</el-tag>
+            <el-tag v-else-if="deployLog.status === '2'" type="success" size="small">成功</el-tag>
+            <el-tag v-else-if="deployLog.status === '1'" type="danger" size="small">失败</el-tag>
+            <el-tag v-else type="info" size="small">未知</el-tag>
+          </span>
+          <span v-if="deployLog.exitCode !== null" style="margin-left: 12px;">
+            退出码：{{ deployLog.exitCode }}
+          </span>
+        </div>
+        <el-button
+          size="small"
+          type="primary"
+          text
+          @click="refreshDeployLog"
+        >刷新</el-button>
+      </div>
+      <el-scrollbar height="420px">
+        <pre
+          style="background:#1e293b;color:#e5e7eb;padding:12px;border-radius:4px;font-size:12px;line-height:1.6;white-space:pre-wrap;margin:0;"
+        >{{ deployLog.output || '暂无日志输出' }}</pre>
+      </el-scrollbar>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="closeDeployLog">关 闭</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup name="Release">
 import { listRelease, getRelease, delRelease, addRelease, updateRelease, executeRelease } from "@/api/ops/release";
-import { listApp } from "@/api/ops/app";
+import { listApp, getApp } from "@/api/ops/app";
 import { listDeployTemplate } from "@/api/ops/deployTemplate";
 import { getProcessProgress } from "@/api/ops/workflow";
 import BpmnViewer from "@/components/BpmnViewer";
-import { getCurrentInstance, reactive, ref, toRefs } from 'vue';
+import { getCurrentInstance, reactive, ref, toRefs, onMounted, onUnmounted } from 'vue';
+import { getDeployRecord } from "@/api/ops/deployRecord";
 
 const { proxy } = getCurrentInstance();
 
 const releaseList = ref([]);
 const open = ref(false);
 const processOpen = ref(false);
+const deployConfirmOpen = ref(false);
+const currentRelease = ref(null);
+const currentApp = ref(null);
 const bpmnXml = ref("");
 const activeActivityIds = ref([]);
 const activeTaskInfo = ref([]);
@@ -286,6 +536,18 @@ const title = ref("");
 
 const appOptions = ref([]);
 const templateOptions = ref([]);
+const serverOptions = ref([]);
+
+// 部署日志相关
+const deployLogVisible = ref(false);
+const deployLog = reactive({
+  recordId: null,
+  status: '',
+  exitCode: null,
+  output: '',
+});
+const deployLogLoading = ref(false);
+let deployLogTimer = null;
 
 const data = reactive({
   form: {},
@@ -341,10 +603,98 @@ function getTemplateList() {
   });
 }
 
+/** 查询服务器列表 */
+function getServerList() {
+  import('@/api/ops/server').then(({ listServer }) => {
+    listServer().then(response => {
+      serverOptions.value = response.rows;
+    });
+  });
+}
+
+/** 获取服务器名称 */
+function getServerName(serverId) {
+  const server = serverOptions.value.find(item => item.serverId === parseInt(serverId));
+  return server ? server.serverName : serverId;
+}
+
 /** 获取应用名称 */
 function getAppName(appId) {
   const app = appOptions.value.find(item => item.appId === appId);
   return app ? app.appName : appId;
+}
+
+function openDeployLog(recordId) {
+  if (!recordId) {
+    proxy.$modal.msgWarning("未获取到部署记录ID，无法显示日志");
+    return;
+  }
+  deployLog.recordId = recordId;
+  deployLog.status = '0';
+  deployLog.exitCode = null;
+  deployLog.output = '';
+  deployLogVisible.value = true;
+  startDeployLogPolling();
+}
+
+function startDeployLogPolling() {
+  stopDeployLogPolling();
+  fetchDeployLog();
+  deployLogTimer = setInterval(() => {
+    fetchDeployLog();
+  }, 2000);
+}
+
+function stopDeployLogPolling() {
+  if (deployLogTimer) {
+    clearInterval(deployLogTimer);
+    deployLogTimer = null;
+  }
+}
+
+function fetchDeployLog() {
+  if (!deployLog.recordId) return;
+  deployLogLoading.value = true;
+  getDeployRecord(deployLog.recordId)
+    .then(res => {
+      const data = res.data || {};
+      deployLog.status = data.status || '';
+      deployLog.output = '';
+      deployLog.exitCode = null;
+      if (data.jsonResult) {
+        try {
+          const parsed = JSON.parse(data.jsonResult);
+          deployLog.output = parsed.output || '';
+          if (parsed.exitCode !== undefined && parsed.exitCode !== null) {
+            deployLog.exitCode = parsed.exitCode;
+          }
+        } catch (e) {
+          deployLog.output = String(data.jsonResult);
+        }
+      }
+      if (deployLog.status === '1' || deployLog.status === '2') {
+        stopDeployLogPolling();
+      }
+    })
+    .catch(err => {
+      deployLog.output = '获取部署日志失败: ' + (err?.message || '');
+      if (!deployLog.status) {
+        deployLog.status = '1';
+      }
+      stopDeployLogPolling();
+    })
+    .finally(() => {
+      deployLogLoading.value = false;
+    });
+}
+
+function refreshDeployLog() {
+  fetchDeployLog();
+}
+
+function closeDeployLog() {
+  deployLogVisible.value = false;
+  stopDeployLogPolling();
 }
 
 /** 取消按钮 */
@@ -453,12 +803,25 @@ function handleDelete(row) {
 
 /** 执行发布操作 */
 function handleExecute(row) {
-  proxy.$modal.confirm('确认立即执行发布任务 "' + row.title + '" 吗？').then(function() {
-    return executeRelease(row.id);
-  }).then(() => {
+  currentRelease.value = row;
+  getApp(row.appId).then(res => {
+    currentApp.value = res.data;
+    deployConfirmOpen.value = true;
+  });
+}
+
+function confirmDeploy() {
+  deployConfirmOpen.value = false;
+  executeRelease(currentRelease.value.id).then(res => {
+    const recordId = res.data;
     proxy.$modal.msgSuccess("发布指令已下发");
+    if (recordId) {
+      openDeployLog(recordId);
+    }
     getList();
-  }).catch(() => {});
+  }).catch(() => {
+    proxy.$modal.msgError("部署启动失败");
+  });
 }
 
 /** 流程追踪 */
@@ -479,8 +842,424 @@ function handleViewProcess(row) {
   }
 }
 
+onUnmounted(() => {
+  stopDeployLogPolling();
+});
+
 // Init
 getAppList();
 getTemplateList();
+getServerList();
 getList();
 </script>
+
+<style scoped>
+/* 主对话框样式 */
+.deploy-confirm-dialog {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  
+  .el-dialog__header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 24px 32px;
+    border-radius: 12px 12px 0 0;
+  }
+  
+  .el-dialog__title {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+  }
+  
+  .el-dialog__body {
+    padding: 32px;
+    background: #f8fafc;
+  }
+  
+  .el-dialog__footer {
+    padding: 24px 32px;
+    background: white;
+    border-top: 1px solid #e2e8f0;
+    border-radius: 0 0 12px 12px;
+  }
+}
+
+/* 内容区域 */
+.deploy-confirm-content {
+  .deploy-card {
+    border: none;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    
+    &:hover {
+      box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+      transform: translateY(-2px);
+    }
+    
+    .el-card__body {
+      padding: 24px;
+    }
+  }
+  
+  /* 卡片头部 */
+  .card-header {
+    display: flex;
+    align-items: center;
+    padding: 20px 24px;
+    background: white;
+    border-bottom: 1px solid #f1f5f9;
+    
+    .avatar {
+      margin-right: 16px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      
+      &.bg-indigo {
+        background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+      }
+      
+      &.bg-emerald {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      }
+      
+      &.bg-amber {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      }
+      
+      .icon {
+        font-size: 18px;
+        color: white;
+      }
+    }
+    
+    .header-text {
+      flex: 1;
+      
+      .title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1e293b;
+        margin: 0 0 4px 0;
+      }
+      
+      .subtitle {
+        font-size: 14px;
+        color: #64748b;
+        margin: 0;
+      }
+    }
+  }
+  
+  /* 应用信息网格 */
+  .app-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    
+    .info-item {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      
+      .info-label {
+        font-size: 14px;
+        color: #64748b;
+        font-weight: 500;
+      }
+      
+      .info-value {
+        font-size: 16px;
+        color: #1e293b;
+        font-weight: 600;
+        
+        &.version {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+      }
+    }
+  }
+  
+  /* 配置网格 */
+  .config-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    
+    .config-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 16px;
+      background: #f8fafc;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      transition: all 0.2s ease;
+      
+      &:hover {
+        border-color: #667eea;
+        box-shadow: 0 2px 4px rgba(102, 126, 234, 0.1);
+      }
+      
+      .config-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: white;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        color: #667eea;
+        font-size: 20px;
+        flex-shrink: 0;
+      }
+      
+      .config-content {
+        flex: 1;
+        
+        .config-label {
+          display: block;
+          font-size: 14px;
+          color: #64748b;
+          margin-bottom: 4px;
+        }
+        
+        .config-value {
+          font-size: 16px;
+          color: #1e293b;
+          font-weight: 600;
+        }
+      }
+    }
+  }
+  
+  /* 服务器列表 */
+  .server-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    
+    .server-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px;
+      background: white;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      transition: all 0.2s ease;
+      
+      &:hover {
+        border-color: #10b981;
+        box-shadow: 0 2px 4px rgba(16, 185, 129, 0.1);
+      }
+      
+      .server-icon {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border-radius: 12px;
+        color: white;
+        font-size: 24px;
+        flex-shrink: 0;
+      }
+      
+      .server-info {
+        flex: 1;
+        
+        .server-name {
+          font-size: 16px;
+          font-weight: 600;
+          color: #1e293b;
+          margin-bottom: 4px;
+        }
+        
+        .server-id {
+          font-size: 14px;
+          color: #64748b;
+        }
+      }
+      
+      .server-status {
+        flex-shrink: 0;
+      }
+    }
+  }
+  
+  /* 脚本容器 */
+  .script-container {
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    
+    .script-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+      
+      .script-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: #1e293b;
+      }
+      
+      .script-length {
+        font-size: 12px;
+        color: #64748b;
+      }
+    }
+    
+    .script-content {
+      background: #1e293b;
+      padding: 20px;
+      
+      pre {
+        margin: 0;
+        font-size: 13px;
+        line-height: 1.6;
+        color: #f8fafc;
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        white-space: pre-wrap;
+        max-height: 300px;
+        overflow-y: auto;
+        
+        &::-webkit-scrollbar {
+          width: 6px;
+        }
+        
+        &::-webkit-scrollbar-track {
+          background: #2d3748;
+          border-radius: 3px;
+        }
+        
+        &::-webkit-scrollbar-thumb {
+          background: #4a5568;
+          border-radius: 3px;
+          
+          &:hover {
+            background: #718096;
+          }
+        }
+      }
+    }
+  }
+  
+  /* 空状态 */
+  .empty-state {
+    padding: 60px 0;
+    text-align: center;
+    
+    .empty-icon {
+      width: 80px;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f8fafc;
+      border-radius: 20px;
+      margin: 0 auto 20px;
+      color: #94a3b8;
+      font-size: 40px;
+    }
+    
+    .empty-text {
+      font-size: 16px;
+      color: #64748b;
+      font-weight: 500;
+    }
+  }
+}
+
+/* 对话框底部 */
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  
+  .cancel-button {
+    padding: 10px 24px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      background: #f1f5f9;
+      color: #334155;
+    }
+  }
+  
+  .deploy-button {
+    padding: 10px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    &:active {
+      transform: translateY(0);
+    }
+  }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .deploy-confirm-dialog {
+    width: 95% !important;
+    
+    .el-dialog__body {
+      padding: 20px;
+    }
+  }
+  
+  .deploy-confirm-content {
+    .config-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .app-info-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+/* 动画效果 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.deploy-card {
+  animation: fadeIn 0.4s ease-out;
+}
+
+.deploy-card:nth-child(1) { animation-delay: 0.05s; }
+.deploy-card:nth-child(2) { animation-delay: 0.1s; }
+.deploy-card:nth-child(3) { animation-delay: 0.15s; }
+.deploy-card:nth-child(4) { animation-delay: 0.2s; }
+</style>

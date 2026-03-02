@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.web.mapper.DockerImageMapper">
+    
+    <resultMap type="DockerImage" id="DockerImageResult">
+        <result property="imageId"         column="image_id"          />
+        <result property="imageName"       column="image_name"        />
+        <result property="imageTag"        column="image_tag"         />
+        <result property="serverId"        column="server_id"         />
+        <result property="imageDockerId"   column="image_docker_id"   />
+        <result property="imageSize"       column="image_size"        />
+        <result property="pullTime"        column="pull_time"         />
+        <result property="lastUsedTime"    column="last_used_time"    />
+        <result property="createTime"      column="create_time"       />
+        <result property="updateTime"      column="update_time"       />
+    </resultMap>
+
+    <sql id="selectDockerImageVo">
+        select image_id, image_name, image_tag, server_id, image_docker_id,
+               image_size, pull_time, last_used_time, create_time, update_time
+        from t_docker_image
+    </sql>
+
+    <select id="selectDockerImageList" parameterType="DockerImage" resultMap="DockerImageResult">
+        <include refid="selectDockerImageVo"/>
+        <where>  
+            <if test="imageName != null and imageName != ''">
+                and image_name like concat('%', #{imageName}, '%')
+            </if>
+            <if test="imageTag != null and imageTag != ''">
+                and image_tag = #{imageTag}
+            </if>
+            <if test="serverId != null">
+                and server_id = #{serverId}
+            </if>
+        </where>
+        order by pull_time desc
+    </select>
+    
+    <select id="selectDockerImageById" parameterType="Long" resultMap="DockerImageResult">
+        <include refid="selectDockerImageVo"/>
+        where image_id = #{imageId}
+    </select>
+
+    <select id="selectDockerImageByNameTagServer" resultMap="DockerImageResult">
+        <include refid="selectDockerImageVo"/>
+        where image_name = #{imageName} 
+          and image_tag = #{imageTag}
+          and server_id = #{serverId}
+    </select>
+
+    <select id="selectDockerImageListByServerId" parameterType="Long" resultMap="DockerImageResult">
+        <include refid="selectDockerImageVo"/>
+        where server_id = #{serverId}
+        order by pull_time desc
+    </select>
+        
+    <insert id="insertDockerImage" parameterType="DockerImage" useGeneratedKeys="true" keyProperty="imageId">
+        insert into t_docker_image
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="imageName != null and imageName != ''">image_name,</if>
+            <if test="imageTag != null and imageTag != ''">image_tag,</if>
+            <if test="serverId != null">server_id,</if>
+            <if test="imageDockerId != null">image_docker_id,</if>
+            <if test="imageSize != null">image_size,</if>
+            <if test="pullTime != null">pull_time,</if>
+            <if test="lastUsedTime != null">last_used_time,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateTime != null">update_time,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="imageName != null and imageName != ''">#{imageName},</if>
+            <if test="imageTag != null and imageTag != ''">#{imageTag},</if>
+            <if test="serverId != null">#{serverId},</if>
+            <if test="imageDockerId != null">#{imageDockerId},</if>
+            <if test="imageSize != null">#{imageSize},</if>
+            <if test="pullTime != null">#{pullTime},</if>
+            <if test="lastUsedTime != null">#{lastUsedTime},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+        </trim>
+    </insert>
+
+    <update id="updateDockerImage" parameterType="DockerImage">
+        update t_docker_image
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="imageName != null and imageName != ''">image_name = #{imageName},</if>
+            <if test="imageTag != null and imageTag != ''">image_tag = #{imageTag},</if>
+            <if test="serverId != null">server_id = #{serverId},</if>
+            <if test="imageDockerId != null">image_docker_id = #{imageDockerId},</if>
+            <if test="imageSize != null">image_size = #{imageSize},</if>
+            <if test="pullTime != null">pull_time = #{pullTime},</if>
+            <if test="lastUsedTime != null">last_used_time = #{lastUsedTime},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where image_id = #{imageId}
+    </update>
+
+    <update id="updateImageLastUsedTime">
+        update t_docker_image
+        set last_used_time = #{lastUsedTime},
+            update_time = now()
+        where image_id = #{imageId}
+    </update>
+
+    <delete id="deleteDockerImageById" parameterType="Long">
+        delete from t_docker_image where image_id = #{imageId}
+    </delete>
+
+    <delete id="deleteDockerImageByIds" parameterType="Long">
+        delete from t_docker_image where image_id in
+        <foreach item="imageId" collection="array" open="(" separator="," close=")">
+            #{imageId}
+        </foreach>
+    </delete>
+
+    <delete id="deleteDockerImageByServerId" parameterType="Long">
+        delete from t_docker_image where server_id = #{serverId}
+    </delete>
+
+</mapper>
